@@ -1,0 +1,620 @@
+---
+title: "Redux: Setup + Redux Sagas"
+description: "Complete guide to setup Redux and Redux Sagas with Typescript, also applicable to Javascript"
+sidebar.order: 2
+---
+
+# Guide to Setting Up Redux and Redux Sagas with TypeScript
+
+Before getting into the practical side, we need to understand a set of concepts that will make implementation easier. First, **Redux** itself is a **JavaScript** library based on the **Flux** pattern.
+
+The **Flux** pattern is a frontend architecture pattern developed by **Facebook** to manage data flow in web applications, with the intention of making it predictable and easy to debug. The goal is to create a unidirectional data flow following the basic components of this pattern:
+
+- **Actions**: Objects that define what happens.
+- **Dispatcher**: Distributors that send actions to the stores.
+- **Store**: Data schema that contains the application state and business logic.
+- **Views**: User interface components.
+
+The flow follows this path: `Action → Dispatcher → Store → View → Action`.
+
+Many libraries like **Zustand** also have their origins in this pattern. **Redux** is simply an implementation of it with its own characteristics. For example, in **Redux** there is only a single `store`, where all the data in our application's state will live in tree form. This application state is an immutable, read-only object its properties can only change (basic theory of object references in **JavaScript** and **TypeScript**) through the emission of actions.
+
+Three important concepts specific to **Redux** (two from Redux itself and one from the **Redux Toolkit**) are:
+
+- **Reducers**: Functions that receive the current state and a specific dispatched action, determining the changes the state will undergo and returning its new version.
+- **Slice** (**Redux Toolkit**): Represents a slice of the state one of those fragments of the tree along with the `reducers` and `actions` that manage it, all grouped in a single file and entity.
+- **Middleware**: A function that runs between the moment an `action` is dispatched and the moment it reaches the `reducer`. Think of it as an interceptor. Its main purpose is handling side effects. This is the most important concept to understand what **Redux Saga** is.
+
+**Redux** on its own is a very powerful tool for state management, but by using the right `middleware`, like **Redux Saga**, we can take our application to the next level.
+
+**Redux Saga** is a specialized `middleware` that uses JavaScript generator functions (functions that can be paused and resumed) to handle side effects in a very powerful and declarative way. Use cases include:
+
+- Cancelling tasks in progress.
+- Running multiple tasks in parallel.
+- Handling our application's requests.
+
+It's also important to understand `yield` think of it as a pause button that waits for the statement it precedes to finish. Similar to `await`, it's used inside these generator functions.
+
+That covers the theoretical explanation. It's quite likely that everything above sounds a bit like gibberish if you're not used to these kinds of libraries or even if you know the concepts, the whole **Redux** pattern architecture is a bit hard to digest until you've had considerable practice with it. The learning curve for this library can be quite steep even for very senior developers, so let's go step by step through the more practical explanation.
+
+---
+
+## Installation
+
+We'll assume you already have your **React** application initialized and your **node** and **npm** environment properly set up. If not, you'll need to follow a **React** guide and learn more basic concepts before needing this post.
+
+The command with the packages we'll need to install:
+
+```bash
+npm i react-redux redux-saga @reduxjs/toolkit
+```
+
+With these packages, we'll have the **Redux** base in **React** via `react-redux`, the **Redux Toolkit** tools to simplify setup, and the **Redux Saga** middleware.
+
+---
+
+## Recommended Directory Structure
+
+At this point, before we start, I should clarify that the directory structure both for this architecture pattern and for any application is entirely open to personal preference, without forgetting that there are certain standards and conventions that make the structure easier to read and understand for any project.
+
+Let's assume we start with a basic structure of having different directories for features, components, hooks, etc. inside our project's source. What I (and the standard for these libraries, which I faithfully follow because I find it the clearest) recommend is having a `store` directory with the following structure, assuming we have a **Book** feature for a book detail section:
+
+```
+src/
+└── store/
+    ├── sagas/
+    │   └── book.saga.ts
+    ├── selectors/
+    │   └── book.selectors.ts
+    ├── slices/
+    │   └── book.slice.ts
+    └── index.ts
+```
+
+This would be the most basic structure needed in a project: a `sagas`, `selectors`, and `slices` directory inside `store`. Within these, we can have additional directories for each feature, or directly files for a small application, as in this example. And of course, an `index` file where we'll create and configure our application's `store`. We'll see all of this step by step in the following sections.
+
+Before moving on, note that this structure can be extended with more directories for example: `actions`, for creating actions that don't modify our `store` and don't fit inside `slices` (actions only intercepted in `sagas` for any function we can think of), or a `middleware` directory for our custom interceptor functions but that's more advanced territory I'd like to cover in a future post.
+
+---
+
+## Configuring a Slice
+
+We'll continue with the **Book** entity idea for the rest of this guide. We'll need a `slice` of our state dedicated to this entity (and to each other entity needed in the application).
+
+To do this, we create our corresponding `slice` file as seen in the previous step. First, we need to define the type corresponding to this `slice`. Initially, let's think we'll have properties to track the loading state, error state, a list of books, and a selected book. We also need to define an initial state object based on this typing.
+
+```typescript
+// store/slices/book.slice.ts
+
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+}
+
+interface BookState {
+  isLoading: boolean;
+  isError: boolean;
+  bookList: Book[];
+  selectedBook: Book | null;
+}
+
+const initialState: BookState = {
+  isLoading: false,
+  isError: false,
+  bookList: [],
+  selectedBook: null,
+};
+```
+
+With the typing and `initialState` already defined, it's time to create the `slice`. When creating the `slice`, keep in mind that we're creating both the `actions` and the `reducers` for this section of the state at once. Defining the type of each `slice`'s state is a critical point in this architecture the goal is to keep it simple and understandable. Creating chaos inside the `slices` will greatly increase the difficulty of scaling and maintaining our application in the future.
+
+**Redux Toolkit** provides us with the `createSlice` function, which receives an object with properties to define the name of this section of the state (which will be the prefix of our actions this helps with debugging, as we'll know exactly which `slice` they come from), the initial state, the `reducers`, and the `extraReducers`.
+
+We'll define the `reducers` property as an object whose keys will be our `actions`, and the value, the `reducer` function that will execute when each `action` is dispatched. This function expects two parameters: the state and the action itself. We'll type this action with `PayloadAction` also from **Redux Toolkit**, with a generic type for whatever we want that `action` to carry, thereby defining the parameters that `action` will need to be dispatched, and to which we'll have access in the `reducer`.
+
+The `extraReducers` property is a similar case with certain peculiarities: here we're not defining actions for this `slice` we're defining cases for actions from *other* `slices` that can affect this state. Knowing this makes another good practice obvious: when we have any information we want to store in the state that doesn't belong to the feature we're currently working on (even if it's related), it's better to keep it in a separate `slice` to avoid increasing each `slice`'s complexity unnecessarily.
+
+This property expects a function that receives the `slice`'s `builder` as a parameter, which has an `addCase` property that lets us define `reducers` for these actions imported from another `slice`.
+
+With the `slice` defined, we'll export both its actions and its `reducers` using the corresponding properties.
+
+```typescript
+// store/slices/book.slice.ts (continued)
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+const bookSlice = createSlice({
+  name: "book",
+  initialState,
+  reducers: {
+    setBookListRequest: (state) => {
+      state.isLoading = true;
+      state.isError = false;
+    },
+    setBookListSuccess: (state, action: PayloadAction<Book[]>) => {
+      state.isLoading = false;
+      state.bookList = action.payload;
+    },
+    setBookListError: (state) => {
+      state.isLoading = false;
+      state.isError = true;
+    },
+    setSelectedBook: (state, action: PayloadAction<Book | null>) => {
+      state.selectedBook = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
+    // Example: react to actions from another slice
+    // builder.addCase(otherSlice.actions.someAction, (state, action) => { ... })
+  },
+});
+
+export const {
+  setBookListRequest,
+  setBookListSuccess,
+  setBookListError,
+  setSelectedBook,
+} = bookSlice.actions;
+
+export default bookSlice.reducer;
+```
+
+---
+
+## Defining the Store
+
+Now what do we do with this? The next and crucial step is to define our `store` and inject it into our application.
+
+To do this, we'll use the `index` file inside the `store` directory we created earlier. Everything follows the logic of the theory we've seen. The combination of these `reducers` from the `slices` is what forms our `store`, right? So we need to combine them.
+
+Within **Redux Toolkit**, we have two essential functions: `combineReducers` and `configureStore`. With `combineReducers`, we'll get a combined `reducer` from all the ones defined in each `slice`. Once we have it, we use `configureStore` a function that returns our ready-to-use `store`. It receives an object with multiple properties, but we'll use the essentials: defining the `reducers`, the `middleware` (we won't do much with this yet until we look at **Redux Saga** later and scale our application), and `devTools`.
+
+**Redux** has browser extensions as development tools that will facilitate debugging our application. It's recommended to enable it only in development environments and never in production, as this could allow the user to access data we don't want them to see. (I must point out that we should never store things like API keys or sensitive data in **Redux** state. What I mean by "data we don't want users to see" is things like internal app information not shown in the UI but again, never store keys or critical information in **Redux**.)
+
+From this `store`, we can infer types like `RootState` to have full typing access to the entire `store` from other files like selectors, where it's essential for safe typing.
+
+Within the `middleware`, without going into too much detail, we're configuring **Redux**'s default middleware in this case, `serializableCheck`, which is a middleware that warns us if we're storing non-serializable data like `Set` or `Map`, since **Redux** recommends storing only plain objects convertible to **JSON** to facilitate persistence, hydration, etc. In this case we disable it. This step is not required by any means.
+
+```typescript
+// store/index.ts
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import bookReducer from "./slices/book.slice";
+
+const rootReducer = combineReducers({
+  book: bookReducer,
+});
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+  devTools: process.env.NODE_ENV !== "production",
+});
+
+export default store;
+```
+
+To access this configured `store` in our application, we must add the `Provider` from `react-redux` to wrap our application in a single place, either in a specific component for all the application's `Providers` or in the `main` file. This `provider` expects the `store` we defined as a prop import it and that's it. The entire app must be wrapped to use **Redux**.
+
+```tsx
+// main.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import store from "./store";
+import App from "./App";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>
+);
+```
+
+With this, we have the `store` injected and ready to use in our application. But now how do we use it?
+
+---
+
+## DevTools
+
+Before looking at how to use the store, I want to briefly mention **Redux DevTools**, available in **Chrome** and other browsers as an extension.
+
+Installing this is not required to use **Redux** in your application, but it's tremendously useful for debugging and observing what's happening in your application.
+
+The panel for this extension is quite simple. In the action timeline, we'll see in chronological order the actions being dispatched as we interact with our application. There's a selector for what we want to see in each specific action (by clicking on each one), and the information to display.
+
+By clicking on each action, we can see:
+
+- The action itself with its `payload`.
+- The corresponding state at that moment.
+- The difference the action made to the state when it was dispatched and intercepted by the `reducer`.
+
+There are more options within the extension we can see our application's state in graph format, view raw **JSON**, pause and reset the state, etc. But with what's been explained, we know the basics for reasonably good debugging. Let's get back to how to use the `store` and trigger this flow of actions.
+
+---
+
+## useDispatch and useSelector
+
+**react-redux** gives us two hooks that bear the main responsibility for handling **Redux** in our application.
+
+It's quite simple to understand: `useDispatch` returns the dispatcher, the function that dispatches actions. `useSelector` returns specific values with memoization from the state, letting us decide what we want to access. Thanks to this memoization, our component will re-render every time that value changes. It's important to define carefully what data we want to access to avoid unnecessary re-renders and thus not hurt our application's performance.
+
+Let's look at a very basic example (without **Saga** yet ultra basic, just to understand the behavior): a simple book list component and a div for the selected book's detail, also making use of a custom hook with **axios** to fetch the book list.
+
+The custom hook looks something like this:
+
+```typescript
+// hooks/useBookList.ts
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setBookListSuccess } from "../store/slices/book.slice";
+
+const useBookList = () => {
+  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    axios
+      .get("https://api.example.com/books")
+      .then((response) => {
+        dispatch(setBookListSuccess(response.data));
+      })
+      .catch(() => {
+        setIsError(true);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [dispatch]);
+
+  return { isLoading, isError };
+};
+
+export default useBookList;
+```
+
+And the component would be:
+
+```tsx
+// components/BookList.tsx
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store";
+import { setSelectedBook } from "../store/slices/book.slice";
+import useBookList from "../hooks/useBookList";
+
+const BookList: React.FC = () => {
+  const dispatch = useDispatch();
+  const { isLoading, isError } = useBookList();
+  const bookList = useSelector((state: RootState) => state.book.bookList);
+  const selectedBook = useSelector((state: RootState) => state.book.selectedBook);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>An error occurred.</div>;
+
+  return (
+    <div>
+      <ul>
+        {bookList.map((book) => (
+          <li key={book.id} onClick={() => dispatch(setSelectedBook(book))}>
+            {book.title}
+          </li>
+        ))}
+      </ul>
+
+      {selectedBook && (
+        <div>
+          <h2>{selectedBook.title}</h2>
+          <p>{selectedBook.author}</p>
+          <button onClick={() => dispatch(setSelectedBook(null))}>
+            Deselect
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BookList;
+```
+
+Here's a step-by-step explanation of what's happening:
+
+- We have a hook that invokes an **Axios** request to a books API. Using a `useEffect` and a couple of `useState` calls, the hook makes the request and manages the loading state with `isLoading` and `isError`, which it returns. The magic is in the successful case: we're using `dispatch`, the function returned by `react-redux`'s `useDispatch` hook. We're dispatching the `setBookListSuccess` action with the API data, thereby setting the book list in our state as we defined.
+- In the component, we call this hook. But the hook doesn't return the book list. How do we access it? We use the `useSelector` hook, which receives a function with the state (poorly typed on my part here we could use the `RootState` we created earlier) and we access the specific piece of data we want from the `book` node (defined in the index, inside `combineReducers`). We use it both to get the book list and the selected book, since we have a section to show more details about the book we want. We use `useDispatch` to dispatch the `setSelectedBook` action on click for each book, or set it to null via the corresponding button to undo the selection.
+
+Easy, right?
+
+Let's look at some improvements we can make.
+
+---
+
+## Selector Factory
+
+If you remember when we talked about the proposed directory structure, we had a selectors folder. The idea is to create a selector factory per entity to group all data selection logic from any point in the state node, organized by entity/feature.
+
+**Redux Toolkit** provides a function called `createSelector` that, as the name suggests, allows us to create selectors from the state context and from other selectors, optimizing their memoization and allowing us to add any additional logic for example, data transformation.
+
+Here's an example of a selector factory for what we have, with examples, followed by a detailed explanation:
+
+```typescript
+// store/selectors/book.selectors.ts
+import { createSelector } from "@reduxjs/toolkit";
+import { RootState } from "../index";
+
+// Base selector get the full book node
+const getBookState = (state: RootState) => state.book;
+
+// Basic selectors
+export const getBookList = createSelector(
+  getBookState,
+  (bookState) => bookState.bookList
+);
+
+export const getSelectedBook = createSelector(
+  getBookState,
+  (bookState) => bookState.selectedBook
+);
+
+export const getIsLoading = createSelector(
+  getBookState,
+  (bookState) => bookState.isLoading
+);
+
+export const getIsError = createSelector(
+  getBookState,
+  (bookState) => bookState.isError
+);
+
+// Selectors derived from other selectors
+export const getSelectedBookAuthor = createSelector(
+  getSelectedBook,
+  (selectedBook) => selectedBook?.author ?? null
+);
+
+export const getSelectedBookTitle = createSelector(
+  getSelectedBook,
+  (selectedBook) => selectedBook?.title ?? null
+);
+
+// Selector combining multiple selectors with custom logic
+export const getSelectedBookIdAndAuthor = createSelector(
+  getSelectedBook,
+  getSelectedBookAuthor,
+  (selectedBook, author) =>
+    selectedBook ? { id: selectedBook.id, author } : null
+);
+```
+
+First, we create a function like the one we'd use in the `useSelector` hook to get the full book node. For basic selectors, with the `createSelector` function, we give it the `rootState` context and access the value we want.
+
+In the `getSelectedBookAuthor` and `getSelectedBookTitle` examples, we have the case of using another selector as context in the function.
+
+And lastly, in `getSelectedBookIdAndAuthor`, a case with logic to return a specific object from those parameters it receives several selectors to compose its response.
+
+To use these selectors, you simply import the one you want in your component and pass it to the `useSelector` hook:
+
+```tsx
+// components/BookDetail.tsx
+import React from "react";
+import { useSelector } from "react-redux";
+import { getSelectedBookTitle, getSelectedBookAuthor } from "../store/selectors/book.selectors";
+
+const BookDetail: React.FC = () => {
+  const title = useSelector(getSelectedBookTitle);
+  const author = useSelector(getSelectedBookAuthor);
+
+  if (!title) return null;
+
+  return (
+    <div>
+      <h2>{title}</h2>
+      <p>{author}</p>
+    </div>
+  );
+};
+
+export default BookDetail;
+```
+
+In my opinion, much more elegant it keeps selectors well organized and avoids repeating the access logic or any data transformation logic across the codebase.
+
+What if we take the flow to the next level?
+
+---
+
+## Powering the Flow with Redux Saga
+
+We already talked about **Redux Saga** in the introduction, and we have it installed. How do we use it? Let's first create a saga in its corresponding folder. Here's an example followed by an explanation.
+
+The first thing we're going to do is move the loading and error logic into the state, so everything is managed through **Redux** and **Saga** we'll completely get rid of the custom hook.
+
+We need to create an action inside the `book` slice to make the request (which will activate the loading state). We already have an action for the success case, and we'll also create one for the error state. (The properties were already defined in the typing.)
+
+```typescript
+// store/slices/book.slice.ts (updated reducers)
+setBookListRequest: (state) => {
+  state.isLoading = true;
+  state.isError = false;
+},
+setBookListSuccess: (state, action: PayloadAction<Book[]>) => {
+  state.isLoading = false;
+  state.bookList = action.payload;
+},
+setBookListError: (state) => {
+  state.isLoading = false;
+  state.isError = true;
+},
+```
+
+We're adjusting the `isLoading` and `isError` values according to the corresponding request state nothing more. Remember to also export the new actions.
+
+In the selectors, we'd add two more for `isLoading` and `isError`.
+
+And now, the saga, which follows this naming convention:
+
+```typescript
+// store/sagas/book.saga.ts
+import { call, put, spawn, take } from "redux-saga/effects";
+import { CallEffect, PutEffect, SpawnEffect, TakeEffect } from "redux-saga/effects";
+import axios from "axios";
+import {
+  setBookListRequest,
+  setBookListSuccess,
+  setBookListError,
+} from "../slices/book.slice";
+
+type BookSagaEffects = CallEffect | PutEffect | TakeEffect;
+
+function* fetchBookList(): Generator<BookSagaEffects, void, any> {
+  try {
+    const bookList = yield call(axios.get, "https://api.example.com/books");
+    yield put(setBookListSuccess(bookList.data));
+  } catch (error) {
+    yield put(setBookListError());
+  }
+}
+
+function* watchBookSaga(): Generator<TakeEffect | BookSagaEffects, void, void> {
+  while (true) {
+    yield take(setBookListRequest.type);
+    yield* fetchBookList();
+  }
+}
+
+export function* bookSaga(): Generator<SpawnEffect, void, void> {
+  yield spawn(watchBookSaga);
+}
+```
+
+This is where things get a little more complex to understand, right? Let me explain step by step.
+
+First, we type the effects we're going to use in each saga. Saga effects are functions that can be performed inside these generator functions for one purpose or another. I'll explain each as we go.
+
+We have the main saga, where we use the `spawn` effect, which creates an independent process for the watcher so that if one watcher dies, the others aren't affected. And what is a watcher? A watcher is a guardian, a generator function that waits for something to happen in this case, an `action` in the application. We've defined the `setBookListRequest` action with the `take` effect. This watcher, every time this `action` is dispatched, will execute the function passed as its second parameter to `take`.
+
+You can have multiple `take` calls in the same watcher. It's recommended to have one watcher per saga which makes sense since we've separated them by feature. There are alternatives to `take`, such as `takeLatest`, which cancels the currently running generator function if the action is dispatched again while it's executing. There are others like `race`, `takeEvery`, etc. Covering all effects would require another post, so let's stick to the basics.
+
+The watcher heard the `setBookListRequest` action, so it executes the associated generator function.
+
+In that function, it uses the `call` effect, which expects a promise as its first parameter in this case, the **axios** request (we can create our own custom promise services and import them here this is the recommended approach) and optionally a second parameter for the body if it's a POST request.
+
+Once it finishes and `bookList` has a value, it uses the `put` effect, which is basically a dispatcher it dispatches actions. In the success case, it dispatches the success action to update the state, add the book list, and cancel the loading state. In the error case, it dispatches the corresponding error action.
+
+There are many more effects, such as `all`, which allows running multiple effects in parallel (because if we put multiple `yield call` statements one after another, they'll run sequentially, not in parallel). Many combinations are possible, but covering them all would make this post too long we're aiming for a basic initial configuration.
+
+Now we need to modify our `store`'s `index` to run the saga middleware, and create a root saga that `spawn`s all the ones we've created.
+
+```typescript
+// store/index.ts (updated)
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import createSagaMiddleware from "redux-saga";
+import { spawn } from "redux-saga/effects";
+import bookReducer from "./slices/book.slice";
+import { bookSaga } from "./sagas/book.saga";
+
+const sagaMiddleware = createSagaMiddleware();
+
+const rootReducer = combineReducers({
+  book: bookReducer,
+});
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+function* rootSaga() {
+  yield spawn(bookSaga);
+  // yield spawn(otherSaga);
+}
+
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware),
+  devTools: process.env.NODE_ENV !== "production",
+});
+
+sagaMiddleware.run(rootSaga);
+
+export default store;
+```
+
+The change is: create `sagaMiddleware` using its `createSagaMiddleware` function, `concat` it with **Redux**'s default middleware to add it to our architecture, and run the root saga that `spawn`s all the ones we import.
+
+Done.
+
+Finally, let's look at the corresponding component update:
+
+```tsx
+// components/BookList.tsx (updated)
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { setBookListRequest, setSelectedBook } from "../store/slices/book.slice";
+import {
+  getBookList,
+  getSelectedBook,
+  getIsLoading,
+  getIsError,
+} from "../store/selectors/book.selectors";
+
+const BookList: React.FC = () => {
+  const dispatch = useDispatch();
+  const bookList = useSelector(getBookList);
+  const selectedBook = useSelector(getSelectedBook);
+  const isLoading = useSelector(getIsLoading);
+  const isError = useSelector(getIsError);
+
+  useEffect(() => {
+    dispatch(setBookListRequest());
+  }, [dispatch]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>An error occurred.</div>;
+
+  return (
+    <div>
+      <ul>
+        {bookList.map((book) => (
+          <li key={book.id} onClick={() => dispatch(setSelectedBook(book))}>
+            {book.title}
+          </li>
+        ))}
+      </ul>
+
+      {selectedBook && (
+        <div>
+          <h2>{selectedBook.title}</h2>
+          <p>{selectedBook.author}</p>
+          <button onClick={() => dispatch(setSelectedBook(null))}>
+            Deselect
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BookList;
+```
+
+In the component, we have a `useEffect` that dispatches the action the saga's watcher is listening for. This triggers the flow we've implemented and explained. Meanwhile, the component shows a loading state render until the flow finishes and we have the book list or the error.
+
+All of this is debuggable and trackable in a very convenient way via **Redux DevTools**.
+
+---
+
+## Conclusion
+
+This is everything you need to know for a basic configuration of **Redux** + **Redux Saga** in a **React** application.
+
+I want to emphasize that, especially **Redux Saga**, has much more content to raise the complexity of whatever we need to do in our business logic it's an extensive world.
+
+I want to close with a small conclusion: this architecture allows for easy scaling and debugging for applications with a significant data flow that will need many requests and dispatched actions. It's perfect for large applications, though it can be used for smaller ones too. One of its biggest drawbacks is the amount of boilerplate that needs to be generated for each thing we want to develop. This is actually the most commonly cited excuse by detractors of this architecture, as it generates a lot of code and can potentially become chaotic which is true, but it doesn't have to happen if you maintain it well. We shouldn't dismiss a library with millions of downloads and such widespread use just because of boilerplate. If we did, we'd have to get rid of entire frameworks like **Angular**. In most cases, the fear of using **Redux** and **Redux Saga** comes from unfamiliarity as I mentioned at the beginning, it has a somewhat steep learning curve, but it's all about getting started. If you handle it well, you'll have mastered what I consider the most powerful and organized state management library out there.
