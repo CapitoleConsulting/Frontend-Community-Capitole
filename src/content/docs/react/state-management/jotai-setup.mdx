@@ -1,0 +1,410 @@
+---
+title: "Jotai: Setup"
+description: "Complete guide to setup Jotai and use it in your React applications, with examples and best practices."
+sidebar.order: 3
+---
+
+# Jotai: Setup guide to take state management down to the atomic level
+
+## What is Jotai?
+
+To understand Jotai, we need to get familiar with the term **"atom" as the minimum unit of state**, and with the idea that everything we scale up originates from them (a pretty fitting metaphor). This strategy is called *atomic state management* and its goal is to make **React only re-render the components that depend on each specific atom whenever that atom changes, eliminating all unnecessary re-renders**.
+
+Its main characteristics are:
+
+- **Minimal API**, 100% hook-based.
+- **Performance optimization** through granular renders.
+- **Native async support** with compatibility for SSR (Server-side Rendering) and Suspense.
+- **Minimal to non-existent boilerplate**.
+
+All of this sounds **ideal for small or medium-sized applications**, where state management should be kept minimal and where Redux would be overkill. It also fits cases where the Context API might limit the reactivity and simplicity you're aiming for in a lightweight application.
+
+And yes, **Jotai shines especially in these kinds of applications but it scales very well** and has a lot to offer in larger applications too.
+
+---
+
+## Atoms and Types
+
+There are **different types of atoms in Jotai**. Let's look at them in detail.
+
+### Primitive Atoms
+
+First, we have primitive atoms. These can be of any type: boolean, number, string, objects, arrays, etc. **We declare them in a separate file** whether that's an atoms file per entity, an `atoms/` directory inside your source, or however you want to define your architecture. The standard seems to be something like that.
+
+Here's an example:
+
+```javascript
+import { atom } from "jotai";
+
+// Basic atom declarations
+const counterAtom = atom(0);
+const nightModeAtom = atom(false);
+```
+
+We have a set of **hooks available to use these atoms inside our components**. Which ones we use depends on whether we're going to read and write in the same component, or only one of the two. If reading and writing happen in separate components, we can split them to optimize re-renders.
+
+If we need **both reading and writing in the same component**:
+
+```tsx
+import { useAtom } from "jotai";
+import { counterAtom } from "../atoms/generic";
+
+// Component that reads and updates the counter atom
+const Counter: React.FC = () => {
+  const [counter, setCounter] = useAtom(counterAtom);
+
+  const handleClick = () => {
+    setCounter((c) => c + 1);
+  };
+
+  return (
+    <button onClick={handleClick}>
+      Count: {counter}
+    </button>
+  );
+};
+```
+
+Just like `useState`, the `useAtom` hook **provides both the atom's value and its setter**. And just like `useState`'s setter, we get the **previous value as the callback's argument**. The difference is that this `counterAtom` is shared across the application.
+
+That's it: **one hook, one state, and automatic reactivity** any component using this `counterAtom` is subscribed to its value.
+
+If reading and writing happen in different components, we use these hooks instead:
+
+```tsx
+import { useAtomValue, useSetAtom } from "jotai";
+import { nightModeAtom } from "../atoms/generic";
+
+// Component that only reads the night mode status
+const NightModeStatus = () => {
+  const nightMode = useAtomValue(nightModeAtom);
+  return <div>Night mode is {nightMode ? "ON" : "OFF"}</div>;
+};
+
+// Component that only updates the night mode status
+const NightModeToggle = () => {
+  const setNightMode = useSetAtom(nightModeAtom);
+
+  const handleToggleButtonClick = () => {
+    setNightMode((prev) => !prev);
+  };
+
+  return <button onClick={handleToggleButtonClick}>Toggle night mode</button>;
+};
+```
+
+### Derived Atoms
+
+Continuing with the chemistry metaphor a derived atom is like a molecule: **you combine atoms to create something new**. I can't think of a better example to explain it than this:
+
+```javascript
+import { atom } from "jotai";
+
+// Primitive atoms
+const firstNameAtom = atom("Michael");
+const lastNameAtom = atom("Jackson");
+// Derived atom that combines the first and last name
+const fullNameAtom = atom((get) => `${get(firstNameAtom)} ${get(lastNameAtom)}`);
+```
+
+In short, **you can read values from other atoms before returning a derived value**. The water metaphor might not look particularly useful, but a form validation example makes it much clearer:
+
+```javascript
+import { atom } from "jotai";
+
+const serviceNameAtom = atom("my-service");
+const environmentAtom = atom("staging");
+const replicasAtom = atom(2);
+const enableAutoscalingAtom = atom(false);
+const imageTagAtom = atom("v1.0.0");
+
+// Simple validation for a deployment/config form
+const isValidConfigAtom = atom((get) => {
+  const serviceName = String(get(serviceNameAtom)).trim();
+  const env = get(environmentAtom);
+  const replicas = get(replicasAtom);
+  const imageTag = get(imageTagAtom);
+
+  const envValid = ["development", "staging", "production"].includes(env);
+  const replicasValid = Number.isInteger(replicas) && replicas >= 1;
+  const imageTagValid = /^v?\d+\.\d+\.\d+$/.test(imageTag);
+
+  return serviceName.length > 0 && envValid && replicasValid && imageTagValid;
+});
+```
+
+Notice that these atoms **are declared with a callback instead of a value** a callback that receives a getter for the rest of the atoms. This is very reminiscent of selectors from other libraries like Redux and Recoil. These are what we call **read-only atoms**.
+
+Similarly, there exist **write-only atoms**, whose function is conceptually similar to a Redux slice reducer (with all the differences around immutable state, dispatch, etc.):
+
+```javascript
+import { atom } from "jotai";
+import { useSetAtom } from "jotai";
+
+// Primitive atom to hold events
+const eventsAtom = atom([]);
+
+// Write-only atom to add a new event to the events list, using it like a reducer
+const addEventAtom = atom(
+  null,
+  (get, set, event) => {
+    const newEvent = {
+      id: Date.now(),
+      type: event?.type || "info",
+      message: event?.message || String(event) || "",
+      timestamp: new Date(),
+      source: event?.source || "system",
+    };
+    set(eventsAtom, [...get(eventsAtom), newEvent]);
+  }
+);
+
+const AddDeployEventButton = () => {
+  const addEvent = useSetAtom(addEventAtom);
+
+  return (
+    <button
+      onClick={() =>
+        addEvent({ type: "deploy", message: "Deployment completed", source: "CI" })
+      }
+    >
+      Add deploy event
+    </button>
+  );
+};
+```
+
+With just these examples, we can already see the **amount of boilerplate Jotai eliminates without sacrificing functionality**.
+
+All of this opens up a world of possibilities for our application's state management but this is just the beginning of what Jotai offers. There are **many more features** that will complete your experience and show you how well it scales for larger use cases, covering most (if not all) of what other tools offer. Let's look at some of them.
+
+---
+
+## Utilities
+
+Beyond the basic concept of atoms and their uses, Jotai provides several utilities that let us **scale our application to higher levels without missing anything from other libraries**.
+
+We'll look at the most important ones, noting that each can be explored in much more depth, and that there are even more utilities and extensions officially maintained by Jotai itself not third-party libraries, though **more do exist beyond the official utilities**.
+
+---
+
+## Storage / Persistence
+
+It's possible to **create atoms that persist their value**. This value is stored in `localStorage` or `sessionStorage`, or in `AsyncStorage` if we're on React Native. For this, we have the **`atomWithStorage` function**:
+
+```javascript
+import { useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+
+// Atom that persists the selected language in localStorage with the key "language"
+const languageAtom = atomWithStorage("language", "es");
+```
+
+The atom returned by this function works like any other atom we've seen, with the key difference that **its value will persist** in the specified storage.
+
+This function accepts the following **parameters**:
+
+- **`key` (required)**: the unique identifier for storage.
+- **`initialValue` (required)**: the default value.
+- **`storage` (optional)**: an object with functions to customize how the value is saved (`getItem`, `setItem`, `removeItem`, and `subscribe`). Useful for choosing where to store the value or transforming it.
+
+```javascript
+import { atomWithStorage } from "jotai/utils";
+
+// Atom that persists the cart items in sessionStorage with the key "cart" and custom JSON serialization
+const cartAtom = atomWithStorage("cart", [], {
+  getItem: (key) => {
+    const value = sessionStorage.getItem(key);
+    return value ? JSON.parse(value) : [];
+  },
+  setItem: (key, value) => {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  },
+  removeItem: (key) => sessionStorage.removeItem(key),
+});
+```
+
+- **`getOnInit` (optional, `false` by default)**: indicates whether to read the value from storage on initialization. If set to `false`, the atom will start with the default value; if set to `true`, it will immediately read from storage, avoiding any value-flicker on load.
+
+---
+
+## Asynchrony
+
+**Handling asynchrony well** is fundamental in modern frontend development, and **Jotai provides all the tools we need** for it.
+
+We can define **async read atoms that return promises**, since Jotai has **full support for async and React's Suspense**. When consuming any atom wrapped in Suspense, **Jotai automatically manages the loading cycle** without any extra effort.
+
+Here's how you **define an async atom** in Jotai:
+
+```javascript
+import { atom } from "jotai";
+
+// Async read atom that fetches book data from an API
+export const bookAtom = atom(async () => {
+  const res = await fetch("/api/book");
+  if (!res.ok) throw new Error("Could not load book");
+  return res.json();
+});
+```
+
+And we only need to **consume it in our component**, assuming the resulting value is what we expect the promise to resolve to in the success case. Suspense handles the loading state automatically. If we also wrap it in an **ErrorBoundary, the error state is covered too**:
+
+```tsx
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { useAtomValue } from "jotai";
+import { bookAtom } from "../atoms/book";
+
+const BookProfile = () => {
+  const book = useAtomValue(bookAtom);
+
+  return (
+    <div>
+      <h1>{book.title}</h1>
+      <p>{book.description}</p>
+    </div>
+  );
+};
+
+const App = () => (
+  <ErrorBoundary fallback={<h1>Error loading book</h1>}>
+    <Suspense fallback={<div>Loading...</div>}>
+      <BookProfile />
+    </Suspense>
+  </ErrorBoundary>
+);
+```
+
+**What if we don't want to use Suspense?** We also have tools to control the loading state ourselves. One option is to check the promise state manually:
+
+```javascript
+if (book instanceof Promise) {
+  return <div>Loading book...</div>;
+}
+```
+
+But **there are better options**. This is where the **`loadable` function** comes in. We provide it an **async read atom** and it returns the **promise state, the data, and the error (if any)** very similar to what query libraries like SWR or React Query return:
+
+```tsx
+import { useAtomValue } from "jotai";
+import { loadable } from "jotai/utils";
+import { bookAtom } from "../atoms/book";
+
+// Create a loadable version of the bookAtom to manage loading and error states
+const bookLoadableAtom = loadable(bookAtom);
+
+const BookProfile = () => {
+  const { state, data, error } = useAtomValue(bookLoadableAtom);
+
+  if (state === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (state === "hasError") {
+    return <h1>Error: {error.message}</h1>;
+  }
+
+  return (
+    <div>
+      <h1>{data.title}</h1>
+      <p>{data.description}</p>
+    </div>
+  );
+};
+```
+
+Quite useful and very elegant, with minimal generated code. At this point, we've covered almost all the basic needs of state management but there's still a lot more.
+
+---
+
+## Lazy Loading
+
+Jotai also provides tools for lazy-loading atom values. Atoms are initialized at the very beginning of the application lifecycle, but we might have **some that need to load heavy data** at a high cost.
+
+This is where **`atomWithLazy`** comes in. It ensures that the atom's default value is only loaded when the **first component that uses it is rendered** so if that component isn't visible at startup, it won't affect the app's initial load performance. Once loaded, this atom behaves like a standard primitive atom.
+
+```tsx
+import { atomWithLazy } from "jotai/utils";
+import { useAtomValue } from "jotai";
+import { useState } from "react";
+
+// Atom that lazily loads expensive data only when the first component that uses it is rendered
+const expensiveDataAtom = atomWithLazy(() => {
+  return { data: "Very heavy data" };
+});
+
+const HomePage = () => {
+  return <h1>Home</h1>;
+};
+
+const DataPage = () => {
+  const data = useAtomValue(expensiveDataAtom);
+  return (
+    <div>
+      <h1>Data Page</h1>
+      <p>Content: {data.data}</p>
+    </div>
+  );
+};
+
+const App = () => {
+  const [currentPage, setCurrentPage] = useState("home");
+
+  return (
+    <div>
+      <nav>
+        <button onClick={() => setCurrentPage("home")}>Home</button>
+        <button onClick={() => setCurrentPage("data")}>Data</button>
+      </nav>
+
+      {currentPage === "home" && <HomePage />}
+      {currentPage === "data" && <DataPage />}
+    </div>
+  );
+};
+```
+
+In this example, **the data used in `DataPage` won't be initialized until we navigate to that page and trigger the render of `DataPage`**.
+
+There are many more extra features and extensions in Jotai, but it's impossible to cover them all here. If this has caught your interest, I recommend [visiting the official Jotai website](https://jotai.org/) to see everything it has to offer.
+
+---
+
+## What About SSR (Server-Side Rendering)?
+
+Jotai is compatible with some SSR-focused React frameworks like **Next.js** or **Waku**. There is one important caveat though: **you must use Jotai's `Provider`**. This isn't necessary for standard SPAs created with Vite or CRA, but it is required for SSR apps.
+
+```javascript
+import { Provider } from "jotai";
+```
+
+Then, wrap your application's **root layout** with it.
+
+Jotai also provides a hook, **`useHydrateAtoms`**, to avoid mismatches between server-rendered and client-rendered components for example, when `atomWithStorage` has been used on the client side and the client may have different values. With this hook, **we always ensure client-side atoms are initialized with server data**. It's important to note this hook is **only for use in client-side components** with the `"use client"` directive.
+
+---
+
+## Advantages and Disadvantages of Jotai
+
+To close out, let's briefly look at the **pros and cons of Jotai** as seen throughout this post.
+
+### Advantages
+
+- **Extreme modularity**: each piece of state is an atom. You can have hundreds of atoms organized by entity or domain, and only the components that depend on each atom re-render making it very scalable at the UI level.
+- **Derived and async atoms**: you can build complex data structures and advanced logic by chaining derived atoms, which ultimately end up much easier to maintain than giant reducers.
+- **Lazy loading**: atoms are fundamentally decoupled from each other, so you can import only what you need per feature ideal for architectures like microfrontends.
+- **Excellent performance**: avoids the re-render hell typical of the Context API. Less boilerplate than Redux.
+
+### Disadvantages
+
+- **State organization**: there are no conventions or standards for organizing state the way Redux has (reducers, selectors, actions...). Without agreeing on a concrete architecture by domain or feature, things can get chaotic.
+- **Debugging**: development tools and plugins for Jotai exist, but they're not as mature as Redux DevTools.
+- **Maintaining simplicity and scalability** can get complicated with complex data structures.
+
+---
+
+## Conclusion
+
+**Jotai is a strong contender against established state management libraries and the Context API**. Its atomic philosophy definitely brings a lot of value, **eliminating a huge amount of code** for both simple and relatively complex things. That said, it's a library that hasn't been on the market as long as others its **community is still small and it has evident limitations**.
+
+Even so, for lightweight SPAs with small or medium state needs it's ideal, and it's a **very good choice for modular applications with microfrontends or with inter-dependencies between derived states**. It may fall short in applications with complex data flows and large interdependent data structures.
