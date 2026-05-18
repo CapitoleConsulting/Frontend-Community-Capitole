@@ -1,5 +1,5 @@
 ---
-title: "El estado actual del desarrollo Frontend en Capitole: retos, oportunidades y el nacimiento de una comunidad necesaria"
+title: "Español"
 description: "Análisis sobre la situación actual del desarrollo frontend en Capitole, los retos de trabajar en cliente y la importancia de construir una comunidad técnica sólida."
 pubDate: "2026-05-18"
 author: "Isaac García"
