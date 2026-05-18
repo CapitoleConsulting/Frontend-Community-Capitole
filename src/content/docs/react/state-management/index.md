@@ -1,5 +1,5 @@
 ---
-title: "React State Management: What is it, alternatives and comparison"
+title: "React State Management"
 description: Introduction to React state managment and comparison, recommendations between the main options available
 sidebar.order: 1
 ---

@@ -36,6 +36,7 @@ Here's an example:
 ```javascript
 import { atom } from "jotai";
 
+// Basic atom declarations
 const counterAtom = atom(0);
 const nightModeAtom = atom(false);
 ```
@@ -48,6 +49,7 @@ If we need **both reading and writing in the same component**:
 import { useAtom } from "jotai";
 import { counterAtom } from "../atoms/generic";
 
+// Component that reads and updates the counter atom
 const Counter: React.FC = () => {
   const [counter, setCounter] = useAtom(counterAtom);
 
@@ -73,11 +75,13 @@ If reading and writing happen in different components, we use these hooks instea
 import { useAtomValue, useSetAtom } from "jotai";
 import { nightModeAtom } from "../atoms/generic";
 
+// Component that only reads the night mode status
 const NightModeStatus = () => {
   const nightMode = useAtomValue(nightModeAtom);
   return <div>Night mode is {nightMode ? "ON" : "OFF"}</div>;
 };
 
+// Component that only updates the night mode status
 const NightModeToggle = () => {
   const setNightMode = useSetAtom(nightModeAtom);
 
@@ -96,8 +100,10 @@ Continuing with the chemistry metaphor a derived atom is like a molecule: **you 
 ```javascript
 import { atom } from "jotai";
 
+// Primitive atoms
 const firstNameAtom = atom("Michael");
 const lastNameAtom = atom("Jackson");
+// Derived atom that combines the first and last name
 const fullNameAtom = atom((get) => `${get(firstNameAtom)} ${get(lastNameAtom)}`);
 ```
 
@@ -135,8 +141,10 @@ Similarly, there exist **write-only atoms**, whose function is conceptually simi
 import { atom } from "jotai";
 import { useSetAtom } from "jotai";
 
+// Primitive atom to hold events
 const eventsAtom = atom([]);
 
+// Write-only atom to add a new event to the events list, using it like a reducer
 const addEventAtom = atom(
   null,
   (get, set, event) => {
@@ -188,6 +196,7 @@ It's possible to **create atoms that persist their value**. This value is stored
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
+// Atom that persists the selected language in localStorage with the key "language"
 const languageAtom = atomWithStorage("language", "es");
 ```
 
@@ -202,6 +211,7 @@ This function accepts the following **parameters**:
 ```javascript
 import { atomWithStorage } from "jotai/utils";
 
+// Atom that persists the cart items in sessionStorage with the key "cart" and custom JSON serialization
 const cartAtom = atomWithStorage("cart", [], {
   getItem: (key) => {
     const value = sessionStorage.getItem(key);
@@ -229,6 +239,7 @@ Here's how you **define an async atom** in Jotai:
 ```javascript
 import { atom } from "jotai";
 
+// Async read atom that fetches book data from an API
 export const bookAtom = atom(async () => {
   const res = await fetch("/api/book");
   if (!res.ok) throw new Error("Could not load book");
@@ -279,6 +290,7 @@ import { useAtomValue } from "jotai";
 import { loadable } from "jotai/utils";
 import { bookAtom } from "../atoms/book";
 
+// Create a loadable version of the bookAtom to manage loading and error states
 const bookLoadableAtom = loadable(bookAtom);
 
 const BookProfile = () => {
@@ -316,6 +328,7 @@ import { atomWithLazy } from "jotai/utils";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 
+// Atom that lazily loads expensive data only when the first component that uses it is rendered
 const expensiveDataAtom = atomWithLazy(() => {
   return { data: "Very heavy data" };
 });
