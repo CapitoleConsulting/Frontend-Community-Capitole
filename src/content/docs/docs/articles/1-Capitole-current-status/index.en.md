@@ -1,5 +1,5 @@
 ---
-title: "The current state of Frontend development at Capitole: challenges, opportunities and the birth of a needed community"
+title: "English"
 description: "Analysis of the current state of frontend development at Capitole, the challenges of client-facing work and the importance of building a solid technical community."
 pubDate: "2026-05-18"
 author: "Isaac García"
