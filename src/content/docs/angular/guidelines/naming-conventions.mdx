@@ -1,0 +1,317 @@
+---
+title: Naming Conventions
+description: Learn how to name files, components, services, and variables consistently following Angular 2025 style guide standards. Clear naming improves code readability and team collaboration.
+sidebar.order: 1
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+> **Source:** [Angular 2025: New Style Guide Standards and How to Apply Them](https://medium.com/@sehban.alam/angular-2025-new-style-guide-standards-and-how-to-apply-them-3277eef541a3)
+
+## Overview
+
+Consistent naming conventions are fundamental to code readability and team collaboration. **Angular 2025** emphasizes two key principles:
+
+1. **Avoid Generic Names** — Don't use `helpers.ts`, `utils.ts`, `common.ts`
+2. **Consistent Naming Across Related Files** — Component files should share the same base name
+
+## Key Update: Avoid Generic Names
+
+From Angular 2025 style guide:
+
+> **"Steer clear of generic file names like `helpers.ts` or `utils.ts`. Instead, use descriptive names that reflect the file's purpose."**
+
+### ❌ Generic Names (Don't Use)
+
+```
+helpers.ts              — What helpers?
+utils.ts                — What utilities?
+common.ts               — Common what?
+data.ts                 — What data?
+misc.ts                 — Miscellaneous what?
+```
+
+### ✅ Descriptive Names (Use These)
+
+```
+date-formatter.ts                    — Clear purpose
+string-validators.ts                 — Specific functionality
+user.model.ts                        — Domain-specific
+api-endpoints.ts                     — Clear category
+```
+
+## Consistent Naming Across Related Files
+
+Angular 2025 emphasizes that **related files should share a common base name**.
+
+### Example
+
+```
+✅ Good - All related files share "user-profile" base name
+user-profile.component.ts
+user-profile.component.html
+user-profile.component.scss
+
+❌ Bad - Inconsistent naming
+user.ts
+user-view.html
+user-styles.scss
+```
+
+## File Naming Patterns
+
+**Components**: `{name}.component.{ts|html|scss}`
+```
+user-profile.component.ts
+user-profile.component.html
+user-profile.component.scss
+```
+
+**Services**: `{name}.service.ts`
+```
+user.service.ts
+auth.service.ts
+api.service.ts
+```
+
+**Directives**: `{name}.directive.ts`
+```
+highlight.directive.ts
+auto-focus.directive.ts
+```
+
+**Pipes**: `{name}.pipe.ts`
+```
+phone-format.pipe.ts
+truncate.pipe.ts
+```
+
+**Modules** (NgModule): `{name}.module.ts`
+```
+user.module.ts
+auth.module.ts
+```
+
+## Class and Interface Naming
+
+### Classes
+
+**Pattern**: PascalCase, descriptive, with optional suffix for type
+
+<Tabs>
+  <TabItem label="Good">
+    ```ts
+    export class UserService {}
+    export class UserComponent {}
+    export class UserGuard {}
+    export class ApiInterceptor {}
+    ```
+  </TabItem>
+  <TabItem label="Bad">
+    ```ts
+    export class user {} // lowercase
+    export class userServ {} // abbreviated
+    export class userSERVICE {} // inconsistent casing
+    export class Service {} // too generic
+    ```
+  </TabItem>
+</Tabs>
+
+### Interfaces
+
+**Pattern**: PascalCase, optional `I` prefix (but avoid if possible)
+
+<Tabs>
+  <TabItem label="Recommended (No Prefix)">
+    ```ts
+    export interface User {
+      id: string;
+      name: string;
+      email: string;
+    }
+
+    export interface UserService {
+      getUser(id: string): Observable<User>;
+      updateUser(user: User): Observable<User>;
+    }
+    ```
+  </TabItem>
+  <TabItem label="Alternative (With Prefix)">
+    ```ts
+    export interface IUser {
+      id: string;
+      name: string;
+      email: string;
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Variable and Function Naming
+
+### Variables and Properties
+
+**Pattern**: camelCase, descriptive
+
+```ts
+// ✅ Good
+private userList: User[] = [];
+private isLoading = false;
+private selectedUserId: string | null = null;
+private maxRetries = 3;
+
+// ❌ Bad
+private users: User[] = [];        // too short
+private u: User[] = [];             // single letter
+private USER_LIST: User[] = [];     // SCREAMING_SNAKE_CASE
+private the_users: User[] = [];     // snake_case
+private x = 0;                      // unclear meaning
+```
+
+### Functions and Methods
+
+**Pattern**: camelCase, verb-based for actions, clear purpose
+
+```ts
+// ✅ Good - Action verbs
+private loadUsers(): void {}
+private fetchUserData(id: string): Observable<User> {}
+private validateEmail(email: string): boolean {}
+private formatPhoneNumber(phone: string): string {}
+private saveChanges(): void {}
+
+// ✅ Good - Getters
+private getSelectedUser(): User | null {}
+private getUserById(id: string): User {}
+
+// ✅ Good - Checkers (is/has prefix)
+private isUserAuthenticated(): boolean {}
+private hasPermission(permission: string): boolean {}
+
+// ❌ Bad
+private user_data(): void {}        // snake_case
+private UserData(): void {}         // PascalCase
+private processUserDataAndSaveIt(): void {} // too long
+private p(): void {}                // too short
+private data(): void {}             // unclear what it does
+```
+
+## Constants
+
+**Pattern**: UPPER_SNAKE_CASE for true constants, camelCase for config objects
+
+```ts
+// ✅ Good - True constants
+export const MAX_RETRIES = 3;
+export const DEFAULT_TIMEOUT_MS = 5000;
+export const API_BASE_URL = 'https://api.example.com';
+
+// ✅ Good - Configuration objects (if immutable)
+export const defaultConfig = {
+  timeout: 5000,
+  retries: 3,
+  debug: false
+};
+
+// ❌ Bad
+export const maxRetries = 3;        // should be UPPER_SNAKE_CASE
+export const MAX_RETRIES_ALLOWED = 3; // redundant suffix
+export const API = 'https://api.example.com'; // too short/generic
+```
+
+## Signals and Observables
+
+<Tabs>
+  <TabItem label="Signals">
+    ```ts
+    // ✅ Good - no suffix, called as functions
+    readonly count = signal(0);
+    readonly username = signal('');
+    readonly isLoading = signal(false);
+    readonly selectedUser = signal<User | null>(null);
+    ```
+  </TabItem>
+  <TabItem label="Observables">
+    ```ts
+    // ✅ Good - optional $ suffix for observables
+    readonly users$ = this.userService.getUsers();
+    readonly user$ = this.userService.getUserById(id);
+    
+    // or without $ (also acceptable in modern Angular)
+    readonly users = this.userService.getUsers();
+    readonly user = this.userService.getUserById(id);
+    ```
+  </TabItem>
+</Tabs>
+
+## Selector Names
+
+**Pattern**: kebab-case with prefix
+
+```ts
+// ✅ Good
+@Component({
+  selector: 'app-user-card',      // ✅ with app- prefix
+  selector: 'vs-button',          // ✅ with lib prefix
+  selector: 'lib-modal'           // ✅ with lib prefix
+})
+
+// ❌ Bad
+@Component({
+  selector: 'UserCard',           // ❌ PascalCase
+  selector: 'user_card',          // ❌ snake_case
+  selector: 'usercard'            // ❌ no hyphen (looks like one word)
+  selector: 'user-card-component' // ❌ redundant suffix
+})
+```
+
+## Feature Module Naming
+
+**Pattern**: Feature name + `.module.ts` (NgModules) or feature folder for standalone
+
+```
+src/app/features/
+├── user/                         ✅ Feature folder
+│   ├── user.component.ts
+│   ├── user.service.ts
+│   └── models/
+├── admin/                        ✅ Feature folder
+│   ├── dashboard/
+│   ├── settings/
+│   └── admin.module.ts (if NgModule-based)
+└── dashboard/                    ✅ Feature folder
+    ├── dashboard.component.ts
+    ├── analytics.component.ts
+    └── dashboard.service.ts
+```
+
+## Consistency Checklist
+
+Use this checklist to verify your naming is consistent:
+
+- [ ] All component files start with component name (e.g., `user-profile.component.ts`, `user-profile.component.html`)
+- [ ] Services end with `.service.ts`
+- [ ] Directives end with `.directive.ts`
+- [ ] Pipes end with `.pipe.ts`
+- [ ] No generic names (`helpers.ts`, `utils.ts`, `common.ts`)
+- [ ] Files use kebab-case
+- [ ] Classes and interfaces use PascalCase
+- [ ] Variables, functions, and properties use camelCase
+- [ ] Constants use UPPER_SNAKE_CASE
+- [ ] Selectors use kebab-case with a prefix
+- [ ] Feature folders are named descriptively
+
+## Why This Matters
+
+✅ **Readability** — Developer can quickly understand what each file does
+✅ **Searchability** — Easy to find files with consistent naming
+✅ **Team Collaboration** — Everyone follows the same conventions
+✅ **Maintainability** — Reduces cognitive load when reading code
+✅ **IDE Support** — Better autocomplete and refactoring tools
+
+---
+
+## References
+
+- [Angular Style Guide - Naming](https://angular.dev/style-guide#naming)
+- [TypeScript Naming Conventions](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)

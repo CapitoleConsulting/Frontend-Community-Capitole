@@ -1,0 +1,395 @@
+---
+title: Performance Optimization
+description: Optimize your Angular application performance. Learn techniques for faster load times, reduced bundle size, and improved runtime efficiency.
+sidebar.order: 7
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Performance Metrics
+
+Before optimizing, understand these key metrics:
+
+- **Largest Contentful Paint (LCP)** — When main content loads (target: < 2.5s)
+- **Bundle Size** — Total JavaScript (target: < 100KB gzipped)
+- **Time to Interactive (TTI)** — When app becomes interactive (target: < 3.5s)
+
+## Lazy Loading Modules and Routes
+
+**Lazy loading** defers loading of feature modules until needed.
+
+### Before (Eager Loading)
+
+```ts
+// All modules loaded upfront
+const routes: Routes = [
+  { path: '', component: HomeComponent },
+  { path: 'user', component: UserComponent },    // ← Loaded immediately
+  { path: 'admin', component: AdminComponent }   // ← Loaded immediately
+];
+
+// Bundle size: Large
+// Initial load time: Slow
+```
+
+### After (Lazy Loading)
+
+```ts
+const routes: Routes = [
+  { path: '', component: HomeComponent },
+  {
+    path: 'user',
+    loadChildren: () => import('./features/user/user.module')
+      .then(m => m.UserModule)
+  },
+  {
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin.module')
+      .then(m => m.AdminModule),
+    canActivate: [AdminGuard]
+  }
+];
+
+// Bundle size: Smaller initial bundle
+// Initial load time: Faster
+// User modules loaded on demand
+```
+
+## Code Splitting
+
+Break your application into smaller chunks:
+
+```ts
+// Route-based code splitting
+{
+  path: 'dashboard',
+  loadComponent: () => import('./dashboard/dashboard.component')
+    .then(m => m.DashboardComponent)
+}
+
+// Feature-based code splitting
+{
+  path: 'reports',
+  loadChildren: () => import('./features/reports/reports.module')
+    .then(m => m.ReportsModule)
+}
+```
+
+<Aside type="tip">
+Modern bundlers (Webpack, esbuild) automatically create separate chunks for lazy-loaded modules.
+</Aside>
+
+## Change Detection Optimization
+
+### Use OnPush Strategy
+
+```ts
+// ❌ Default - checks all components every time
+@Component({
+  selector: 'app-item',
+  template: '<div>{{ item.name }}</div>'
+})
+export class ItemComponent {
+  @Input() item: Item;
+}
+
+// ✅ OnPush - only checks when input changes
+@Component({
+  selector: 'app-item',
+  template: '<div>{{ item.name }}</div>',
+  changeDetection: ChangeDetectionStrategy.OnPush // ← Add this
+})
+export class ItemComponent {
+  @Input() item: Item;
+}
+```
+
+**Impact:** 30-50% faster change detection in large apps
+
+### Avoid NgZone Performance Issues
+
+```ts
+// ❌ Every click triggers change detection
+@Component({
+  template: '<div (click)="expensiveOperation()">Click me</div>'
+})
+export class MyComponent {
+  expensiveOperation() {
+    // This runs change detection
+    for (let i = 0; i < 1000000; i++) {
+      // Heavy computation
+    }
+  }
+}
+
+// ✅ Run outside Angular zone for non-visual operations
+@Component({
+  template: '<div (click)="handleClick()">Click me</div>'
+})
+export class MyComponent {
+  private ngZone = inject(NgZone);
+
+  handleClick() {
+    this.ngZone.runOutsideAngular(() => {
+      for (let i = 0; i < 1000000; i++) {
+        // Heavy computation - no change detection
+      }
+    });
+    
+    // Update UI after computation
+    this.ngZone.run(() => {
+      // Update component state here
+    });
+  }
+}
+```
+
+## Bundle Size Optimization
+
+### AOT Compilation (Default)
+
+```bash
+# ✅ Production builds use AOT by default
+npm run build
+
+# Smaller bundle, faster rendering, catches template errors early
+```
+
+### Preload Strategy
+
+```ts
+// Preload likely-needed modules while user interacts
+const routes: Routes = [
+  { path: '', component: HomeComponent },
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./dashboard/dashboard.module')
+      .then(m => m.DashboardModule),
+    data: { preload: true } // ← Preload this module
+  }
+];
+
+@Injectable({ providedIn: 'root' })
+export class PreloadAllModules implements PreloadingStrategy {
+  preload(route: Route, load: Function): Observable<any> {
+    if (route.data?.['preload']) {
+      return load();
+    }
+    return of(null);
+  }
+}
+
+// Use in RouterModule
+RouterModule.forRoot(routes, {
+  preloadingStrategy: PreloadAllModules
+})
+```
+
+## OnDemand Image Loading
+
+```html
+<!-- ❌ Loads immediately -->
+<img src="image.jpg" alt="Image">
+
+<!-- ✅ Lazy loads when visible (native support) -->
+<img src="image.jpg" alt="Image" loading="lazy">
+
+<!-- ✅ Use smaller images on mobile -->
+<picture>
+  <source srcset="image-mobile.jpg" media="(max-width: 600px)">
+  <source srcset="image-desktop.jpg" media="(min-width: 601px)">
+  <img src="image-desktop.jpg" alt="Image" loading="lazy">
+</picture>
+```
+
+## Practical Example: Performance-Optimized List
+
+<Tabs>
+  <TabItem label="Before">
+    ```ts
+    @Component({
+      selector: 'app-user-list',
+      template: `
+        <div *ngFor="let user of users">
+          <app-user-card [user]="user"></app-user-card>
+        </div>
+      `
+    })
+    export class UserListComponent {
+      users: User[] = [];
+
+      constructor(private userService: UserService) {
+        this.userService.getUsers().subscribe(users => {
+          this.users = users;
+        });
+      }
+    }
+
+    // Issues:
+    // - No ChangeDetectionStrategy.OnPush
+    // - No lazy loading
+    // - No pagination for large lists
+    // - No trackBy for *ngFor
+    ```
+  </TabItem>
+  <TabItem label="After">
+    ```ts
+    @Component({
+      selector: 'app-user-list',
+      template: `
+        <div *ngFor="let user of users$ | async; trackBy: trackByUserId">
+          <app-user-card [user]="user"></app-user-card>
+        </div>
+        <button (click)="loadMore()">Load More</button>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class UserListComponent implements OnInit {
+      private userService = inject(UserService);
+      private destroyRef = inject(DestroyRef);
+
+      users$ = this.userService.getUsers().pipe(
+        takeUntilDestroyed(this.destroyRef)
+      );
+
+      ngOnInit() {
+        // Pagination logic
+      }
+
+      trackByUserId(index: number, user: User): string {
+        return user.id;
+      }
+
+      loadMore() {
+        // Load additional users
+      }
+    }
+
+    // Optimizations:
+    // ✅ ChangeDetectionStrategy.OnPush
+    // ✅ async pipe (auto-unsubscribe)
+    // ✅ trackBy for efficient list rendering
+    // ✅ Pagination for large lists
+    ```
+  </TabItem>
+</Tabs>
+
+## Unsubscribe from Observables
+
+```ts
+// ❌ Memory leak - subscription never cleaned up
+export class MyComponent implements OnInit {
+  data: string[] = [];
+
+  constructor(private dataService: DataService) {}
+
+  ngOnInit() {
+    this.dataService.getData().subscribe(data => {
+      this.data = data;
+    });
+  }
+}
+
+// ✅ Properly unsubscribe
+export class MyComponent implements OnInit, OnDestroy {
+  data: string[] = [];
+  private subscription: Subscription;
+
+  constructor(private dataService: DataService) {}
+
+  ngOnInit() {
+    this.subscription = this.dataService.getData()
+      .subscribe(data => {
+        this.data = data;
+      });
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+}
+
+// ✅ Best - use async pipe (auto-unsubscribe)
+export class MyComponent {
+  data$ = this.dataService.getData();
+}
+```
+
+## trackBy for *ngFor
+
+```ts
+// ❌ Slow - recreates DOM elements on every change
+<div *ngFor="let item of items">
+  {{ item.name }}
+</div>
+
+// ✅ Fast - reuses DOM elements
+<div *ngFor="let item of items; trackBy: trackByItemId">
+  {{ item.name }}
+</div>
+
+// Component
+trackByItemId(index: number, item: Item): string {
+  return item.id;
+}
+```
+
+**Impact:** 2-3x faster list rendering
+
+## Compression and Gzip
+
+Enable Gzip compression for production:
+
+```
+# Check bundle size
+npm run build
+# Check dist/ folder size
+
+# Gzip typically reduces size by 60-70%
+```
+
+## Performance Monitoring
+
+```ts
+// Log performance metrics
+if (performance.timing) {
+  const perfData = performance.timing;
+  const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+  console.log('Page Load Time: ' + pageLoadTime);
+}
+
+// Modern API (recommended)
+const observer = new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    console.log(`${entry.name}: ${entry.duration}ms`);
+  }
+});
+
+observer.observe({ entryTypes: ['navigation', 'paint'] });
+```
+
+## Performance Checklist
+
+- [ ] Lazy load feature modules
+- [ ] Use `ChangeDetectionStrategy.OnPush` on all components
+- [ ] Use `trackBy` with `*ngFor`
+- [ ] Use `async` pipe to auto-unsubscribe
+- [ ] Use virtual scrolling for large lists
+- [ ] Remove unused dependencies
+- [ ] Preload critical modules
+- [ ] Enable Gzip compression in production
+- [ ] Use AOT compilation (default)
+- [ ] Monitor Core Web Vitals
+
+## Tools for Performance Analysis
+
+- **Lighthouse** — Chrome DevTools built-in (tab: Lighthouse)
+- **Angular DevTools** — Browser extension for Angular apps
+- **Bundle Analyzer** — `npm install -g webpack-bundle-analyzer`
+- **Web Vitals** — `npm install web-vitals`
+
+---
+
+## References
+
+- [Angular Performance Guide](https://angular.dev/best-practices/runtime-performance)
