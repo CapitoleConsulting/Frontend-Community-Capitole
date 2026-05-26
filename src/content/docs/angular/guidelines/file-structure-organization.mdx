@@ -1,0 +1,338 @@
+---
+title: File Structure Organization
+description: Organize your Angular project for scalability, team collaboration, and maintainability. Learn the recommended folder structure and best practices.
+sidebar.order: 2
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Overview
+
+A well-organized file structure is crucial for scalable Angular applications. It helps developers navigate the codebase quickly, understand the architecture, and maintain consistency across the project.
+
+## Recommended Project Structure
+
+```
+src/
+├── app/
+│   ├── core/                     # Singleton services, guards, interceptors
+│   │   ├── guards/
+│   │   │   ├── auth.guard.ts
+│   │   │   └── permission.guard.ts
+│   │   ├── interceptors/
+│   │   │   ├── error.interceptor.ts
+│   │   │   └── auth.interceptor.ts
+│   │   ├── services/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── api.service.ts
+│   │   │   └── notification.service.ts
+│   │   └── core.module.ts (if using NgModules)
+│   │
+│   ├── shared/                   # Reusable components, directives, pipes
+│   │   ├── components/
+│   │   │   ├── button/
+│   │   │   │   ├── button.component.ts
+│   │   │   │   ├── button.component.html
+│   │   │   │   └── button.component.scss
+│   │   │   └── modal/
+│   │   ├── directives/
+│   │   │   └── highlight.directive.ts
+│   │   ├── pipes/
+│   │   │   └── phone-format.pipe.ts
+│   │   ├── models/
+│   │   │   └── common.model.ts
+│   │   └── shared.module.ts (if using NgModules)
+│   │
+│   ├── features/                 # Feature modules (organized by domain)
+│   │   ├── user/
+│   │   │   ├── components/
+│   │   │   │   ├── user-list/
+│   │   │   │   │   ├── user-list.component.ts
+│   │   │   │   │   ├── user-list.component.html
+│   │   │   │   │   └── user-list.component.scss
+│   │   │   │   └── user-profile/
+│   │   │   ├── services/
+│   │   │   │   └── user.service.ts
+│   │   │   ├── models/
+│   │   │   │   └── user.model.ts
+│   │   │   ├── user-routing.module.ts
+│   │   │   └── user.module.ts (if using NgModules)
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── components/
+│   │   │   ├── services/
+│   │   │   ├── models/
+│   │   │   └── dashboard.module.ts
+│   │   │
+│   │   └── admin/
+│   │       ├── components/
+│   │       ├── services/
+│   │       └── admin.module.ts
+│   │
+│   ├── layout/                   # Application layout components
+│   │   ├── header/
+│   │   ├── sidebar/
+│   │   ├── footer/
+│   │   └── layout.component.ts
+│   │
+│   ├── models/                   # Shared models/types
+│   │   ├── user.model.ts
+│   │   ├── api-response.model.ts
+│   │   └── error.model.ts
+│   │
+│   ├── constants/                # Application constants
+│   │   ├── api-endpoints.ts
+│   │   ├── app-config.ts
+│   │   └── validation-messages.ts
+│   │
+│   ├── app.component.ts          # Root component
+│   ├── app.component.html
+│   ├── app.component.scss
+│   ├── app.routes.ts             # Routing configuration (Angular 16+)
+│   └── app.module.ts             # Root module (if using NgModules)
+│
+├── environments/
+│   ├── environment.ts
+│   ├── environment.prod.ts
+│   └── environment.staging.ts
+│
+├── assets/
+│   ├── images/
+│   ├── icons/
+│   └── fonts/
+│
+├── styles/
+│   ├── variables.scss
+│   ├── mixins.scss
+│   ├── global.scss
+│   └── reset.scss
+│
+├── main.ts                       # Application entry point
+├── index.html
+└── styles.scss                   # Global styles
+```
+
+## Core Module
+
+The `core` module contains **singleton services** and application-wide providers.
+
+<Tabs>
+  <TabItem label="Services">
+    ```ts
+    // src/app/core/services/auth.service.ts
+    import { Injectable } from '@angular/core';
+
+    @Injectable({ providedIn: 'root' })
+    export class AuthService {
+      // Authentication logic
+    }
+    ```
+  </TabItem>
+  <TabItem label="Guards">
+    ```ts
+    // src/app/core/guards/auth.guard.ts
+    import { Injectable } from '@angular/core';
+    import { CanActivate } from '@angular/router';
+
+    @Injectable({ providedIn: 'root' })
+    export class AuthGuard implements CanActivate {
+      // Guard logic
+    }
+    ```
+  </TabItem>
+  <TabItem label="Interceptors">
+    ```ts
+    // src/app/core/interceptors/error.interceptor.ts
+    import { Injectable } from '@angular/core';
+    import { HttpInterceptor } from '@angular/common/http';
+
+    @Injectable()
+    export class ErrorInterceptor implements HttpInterceptor {
+      // Interceptor logic
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+**Key Points:**
+- Services in `core` should use `providedIn: 'root'` to be singletons
+- Only import `core` module in the root module
+- Core module should only be imported once
+
+## Shared Module
+
+The `shared` module contains **reusable components, directives, and pipes**.
+
+```ts
+// src/app/shared/shared.module.ts
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import { ButtonComponent } from './components/button/button.component';
+import { ModalComponent } from './components/modal/modal.component';
+import { HighlightDirective } from './directives/highlight.directive';
+import { PhoneFormatPipe } from './pipes/phone-format.pipe';
+
+@NgModule({
+  declarations: [
+    ButtonComponent,
+    ModalComponent,
+    HighlightDirective,
+    PhoneFormatPipe,
+  ],
+  imports: [CommonModule],
+  exports: [
+    ButtonComponent,
+    ModalComponent,
+    HighlightDirective,
+    PhoneFormatPipe,
+  ],
+})
+export class SharedModule {}
+```
+
+**Key Points:**
+- Shared module can be imported by multiple feature modules
+- Components, directives, and pipes should be exported for reuse
+- No singleton services (those go in `core`)
+
+## Feature Modules
+
+Each feature module is organized by **domain** and contains related components, services, and models.
+
+```
+src/app/features/user/
+├── components/
+│   ├── user-list/
+│   │   ├── user-list.component.ts
+│   │   ├── user-list.component.html
+│   │   ├── user-list.component.scss
+│   │   └── user-list.component.spec.ts
+│   └── user-detail/
+│       ├── user-detail.component.ts
+│       ├── user-detail.component.html
+│       ├── user-detail.component.scss
+│       └── user-detail.component.spec.ts
+├── services/
+│   └── user.service.ts
+├── models/
+│   └── user.model.ts
+├── user-routing.module.ts
+└── user.module.ts
+```
+
+### Lazy Loading Feature Modules
+
+```ts
+// app-routing.module.ts
+const routes: Routes = [
+  { path: '', component: HomeComponent },
+  {
+    path: 'user',
+    loadChildren: () => import('./features/user/user.module')
+      .then(m => m.UserModule)
+  },
+  {
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin.module')
+      .then(m => m.AdminModule),
+    canActivate: [PermissionGuard]
+  }
+];
+```
+
+## Avoid Deep Nesting
+
+<Aside type="tip">
+Keep your directory structure **as flat as possible**. Deep nesting makes files hard to find and understand the structure.
+</Aside>
+
+### Bad Example (Too Deep)
+
+```
+❌ src/app/features/user/management/profile/settings/
+   personal/information/email/services/email.service.ts
+
+This is 8 levels deep!
+```
+
+### Good Example (Reasonably Flat)
+
+```
+✅ src/app/features/user/services/email.service.ts
+
+Much easier to navigate and find files.
+```
+
+## Standalone Components (Angular 14+)
+
+With standalone components, you don't need feature modules:
+
+```
+src/app/features/user/
+├── user-list.component.ts         # Standalone component
+├── user-list.component.html
+├── user-list.component.scss
+├── user-detail.component.ts       # Standalone component
+├── user.service.ts
+├── user.model.ts
+└── user.routes.ts                 # Routes for this feature
+```
+
+```ts
+// user.routes.ts
+import { Routes } from '@angular/router';
+import { UserListComponent } from './user-list.component';
+import { UserDetailComponent } from './user-detail.component';
+
+export const USER_ROUTES: Routes = [
+  { path: '', component: UserListComponent },
+  { path: ':id', component: UserDetailComponent },
+];
+```
+
+## Data-Access Pattern (Advanced)
+
+For larger applications, organize by domain with data-access layer:
+
+```
+src/app/features/user/
+├── data-access/
+│   ├── user.service.ts           # HTTP calls
+│   ├── user.facade.ts            # Orchestration layer
+│   └── user.store.ts             # State management (if using NgRx)
+├── ui/
+│   ├── user-list/
+│   ├── user-detail/
+│   └── user-form/
+└── user.routes.ts
+```
+
+## Folder Organization Checklist
+
+- [ ] `core/` contains singleton services, guards, and interceptors
+- [ ] `shared/` contains reusable components, directives, and pipes
+- [ ] `features/` organized by domain/feature
+- [ ] Feature modules have their own routing configuration
+- [ ] No deeply nested folders (max 4-5 levels)
+- [ ] Each component has its own folder
+- [ ] Related files share common naming base
+- [ ] No generic folders (`common/`, `helpers/`, `utils/`)
+- [ ] Constants are centralized in `constants/`
+- [ ] Models are near where they're used or in `models/`
+
+## Benefits of This Structure
+
+✅ **Scalability** — Easy to add new features without affecting existing code
+✅ **Maintainability** — Clear separation of concerns
+✅ **Team Collaboration** — Everyone understands where things go
+✅ **Lazy Loading** — Features can be loaded on demand
+✅ **Testability** — Easy to test isolated features
+✅ **Performance** — Smaller initial bundle with lazy loading
+
+---
+
+## References
+
+- [Folder Structure Guide](https://www.angular.courses/blog/angular-folder-structure-guide)
+- [Angular Project Structure Guide](https://medium.com/@dragos.atanasoae_62577/angular-project-structure-guide-small-medium-and-large-projects-e17c361b2029)

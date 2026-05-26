@@ -1,0 +1,338 @@
+---
+title: Change Detection Strategy
+description: Optimize Angular performance with OnPush change detection strategy. Learn when to use this pattern from industry best practices.
+sidebar.order: 4
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+> **Source:** [Angular Best Practices](https://medium.com/@indrajitsaha7597/angular-best-practices-cd200719233d)
+
+## Change Detection Overview
+
+**Change detection** is Angular's core mechanism for detecting when application data changes and updating the view accordingly.
+
+### The Problem with Default Strategy
+
+By default, Angular checks **all components** in the entire tree every time ANY change happens:
+- User click
+- API response
+- Timer fires
+- Any async operation
+
+This creates **significant resource overhead**, especially in large applications.
+
+## OnPush: Performance Optimization
+
+From Indrajit Saha's Angular Best Practices:
+
+> "Change detection serves as a fundamental mechanism in Angular, profoundly influencing application performance. It involves detecting alterations in your application's data and subsequently updating the view. By default, Angular employs the 'Default' change detection strategy, which can impose significant resource overhead. However, optimizing performance is feasible through the adoption of the 'OnPush' change detection strategy."
+
+### Implementation
+
+<Tabs>
+  <TabItem label="Basic Example">
+    ```ts
+    import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+
+    @Component({
+      selector: 'app-item',
+      template: '<div>{{ item.name }}</div>',
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class ItemComponent {
+      @Input() item: Item;
+    }
+    ```
+  </TabItem>
+  <TabItem label="With Event Handling">
+    ```ts
+    @Component({
+      selector: 'app-button',
+      template: '<button (click)="handleClick()">Click me</button>',
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class ButtonComponent {
+      @Output() onClick = new EventEmitter<void>();
+
+      handleClick() {
+        this.onClick.emit();
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="With Observable">
+    ```ts
+    @Component({
+      selector: 'app-user',
+      template: '<div>{{ user$ | async | json }}</div>',
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class UserComponent {
+      @Input() user$: Observable<User>;
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Default vs OnPush Performance
+
+### Default Strategy (❌ Inefficient)
+
+```ts
+// Scenario: List with 100 item components
+// User clicks a button to load data
+
+// Angular checks:
+// - App component
+// - List component
+// - ALL 100 item components ← Even if their @Input data didn't change!
+// - Other components on the page
+// Total: Hundreds of checks
+```
+
+### OnPush Strategy (✅ Efficient)
+
+```ts
+// Same scenario with OnPush
+
+// Angular checks:
+// - App component
+// - List component
+// - Only item components whose @Input data changed ← Fewer checks!
+// Total: Only necessary checks
+```
+
+<Aside type="danger">
+For large applications with many components, OnPush can significantly improve performance.
+</Aside>
+
+## When to Use Each Strategy
+
+### Use Default Strategy When:
+- Building simple applications with few components
+- Not worried about performance yet
+- Learning Angular (easier to understand)
+
+### Use OnPush Strategy When:
+- Building performance-critical applications
+- Have lists with many items
+- Working with observables for state management
+- Receiving feedback that app feels slow
+
+## Pattern: Immutable Data with OnPush
+
+The key to OnPush is **immutable data**. Never mutate objects; create new ones instead.
+
+### ❌ Bad: Mutating Data
+
+```ts
+// Item component with OnPush
+export class ItemComponent {
+  @Input() item: Item;
+
+  updateName(name: string) {
+    this.item.name = name; // ❌ Mutating! Change detection won't trigger
+  }
+}
+
+// Parent component
+items.push(item); // ❌ Mutating array! Won't trigger change detection in child
+```
+
+### ✅ Good: Immutable Data
+
+```ts
+// Item component with OnPush
+export class ItemComponent {
+  @Input() item: Item;
+
+  updateName(name: string) {
+    const updated = { ...this.item, name }; // ✅ Create new object
+    this.itemUpdated.emit(updated);
+  }
+}
+
+// Parent component
+this.items = [...this.items, newItem]; // ✅ Create new array
+```
+
+## Practical Examples
+
+### Example 1: Item List Component
+
+<Tabs>
+  <TabItem label="Parent Component">
+    ```ts
+    @Component({
+      selector: 'app-item-list',
+      template: `
+        <app-item *ngFor="let item of items"
+                   [item]="item"
+                   (delete)="onDelete($event)">
+        </app-item>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class ItemListComponent {
+      @Input() items: Item[] = [];
+      @Output() itemDeleted = new EventEmitter<string>();
+
+      onDelete(itemId: string) {
+        this.itemDeleted.emit(itemId);
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Child Component">
+    ```ts
+    @Component({
+      selector: 'app-item',
+      template: `
+        <div>
+          <span>{{ item.name }}</span>
+          <button (click)="delete()">Delete</button>
+        </div>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class ItemComponent {
+      @Input() item: Item;
+      @Output() delete = new EventEmitter<string>();
+
+      deleteItem() {
+        this.delete.emit(this.item.id);
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Smart Component">
+    ```ts
+    @Component({
+      selector: 'app-items',
+      template: `
+        <app-item-list [items]="items()"
+                       (itemDeleted)="onItemDeleted($event)">
+        </app-item-list>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class ItemsComponent {
+      private itemService = inject(ItemService);
+      items = signal<Item[]>([]);
+
+      ngOnInit() {
+        this.itemService.getItems().subscribe(items => {
+          this.items.set(items); // ✅ Update signal
+        });
+      }
+
+      onItemDeleted(itemId: string) {
+        this.items.update(items =>
+          items.filter(i => i.id !== itemId)
+        );
+      }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Example 2: Dashboard with OnPush
+
+```ts
+@Component({
+  selector: 'app-dashboard',
+  template: `
+    <div>
+      <app-metric [data]="metrics()"></app-metric>
+      <app-chart [data]="chartData()"></app-chart>
+      <app-table [data]="tableData()"></app-table>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class DashboardComponent {
+  private dashboardService = inject(DashboardService);
+  
+  metrics = signal<Metric[]>([]);
+  chartData = signal<ChartData | null>(null);
+  tableData = signal<TableRow[]>([]);
+
+  ngOnInit() {
+    this.dashboardService.getMetrics().subscribe(data => {
+      this.metrics.set(data);
+    });
+  }
+}
+```
+
+## Migration Strategy
+
+If your component isn't using OnPush yet:
+
+1. **Add OnPush** to the component
+2. **Verify all inputs** are immutable
+3. **Test the component** thoroughly
+4. **Check browser DevTools** for any visual differences
+5. **Gradual migration** — Start with leaf components first
+
+## OnPush Checklist
+
+- [ ] Component marked with `ChangeDetectionStrategy.OnPush`
+- [ ] All `@Input()` data is immutable
+- [ ] Never mutate objects or arrays in component
+- [ ] Events trigger appropriate parent updates
+- [ ] Observables in template use `async` pipe
+- [ ] No unexpected DOM updates missing
+- [ ] Component tested with different input values
+
+## Common Pitfalls
+
+### Pitfall 1: Forgetting Immutability
+
+```ts
+// ❌ Won't work with OnPush
+this.item.name = 'New Name';
+
+// ✅ Correct
+this.item = { ...this.item, name: 'New Name' };
+```
+
+### Pitfall 2: Not Triggering Parent Updates
+
+```ts
+// ❌ Child update doesn't trigger parent with OnPush
+deleteItem(id: string) {
+  this.items.splice(this.items.indexOf(id), 1); // Mutating!
+}
+
+// ✅ Emit event for parent to handle
+deleteItem(id: string) {
+  this.delete.emit(id);
+}
+```
+
+### Pitfall 3: Forgetting Async Pipe
+
+```ts
+// ❌ Observable won't trigger change detection
+data: Observable<Item> = this.service.getItem();
+template: '{{ data | json }}' // Still using observable
+
+// ✅ Use async pipe
+template: '{{ (data | async) | json }}'
+```
+
+## Performance Impact
+
+Enabling OnPush can improve performance by:
+- **30-50%** in large component trees
+- **Faster change detection cycles**
+- **Reduced CPU usage**
+- **Better mobile performance**
+
+---
+
+## References
+
+- [Change detection strategy](https://angular.dev/guide/components/advanced-configuration#change-detection)
