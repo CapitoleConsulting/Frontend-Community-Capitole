@@ -26,7 +26,7 @@ jobs:
           node-version: 22
 
       - name: Award points
-        run: node .github/scripts/award-points.js
+        run: node .github/scripts/award-points.cjs
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
