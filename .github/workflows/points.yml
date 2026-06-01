@@ -1,0 +1,40 @@
+name: Award community points
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  award-points:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Award points
+        run: node .github/scripts/award-points.js
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
+
+      - name: Commit points update
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
