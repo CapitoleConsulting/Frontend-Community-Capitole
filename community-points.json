@@ -1,4 +1,22 @@
 {
-  "users": {},
-  "history": []
+  "users": {
+    "Isaacgc1999": {
+      "points": 15,
+      "rank": "Rookie"
+    }
+  },
+  "history": [
+    {
+      "prNumber": "22",
+      "prTitle": "Modify points workflow to use new PR creation action",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/22",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:fix-doc",
+        "points:small-improvement"
+      ],
+      "points": 15,
+      "date": "2026-06-02T11:26:48.828Z"
+    }
+  ]
 }
