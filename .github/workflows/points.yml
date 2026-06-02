@@ -38,3 +38,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
+          branch: main
+          file_pattern: community-points.json leaderboard.md
