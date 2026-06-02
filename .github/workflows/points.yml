@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   award-points:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
@@ -34,9 +34,19 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
 
-      - name: Commit points update
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Create pull request with points update
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit_message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
-          branch: main
-          file_pattern: community-points.json leaderboard.md
+          commit-message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
+          branch: "points/award-pr-${{ github.event.pull_request.number }}"
+          delete-branch: true
+          title: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
+          body: |
+            This PR updates the community points after merging PR #${{ github.event.pull_request.number }}.
+
+            Updated files:
+            - community-points.json
+            - leaderboard.md
+          add-paths: |
+            community-points.json
+            leaderboard.md
