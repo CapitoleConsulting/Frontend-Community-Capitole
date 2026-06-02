@@ -1,7 +1,7 @@
 {
   "users": {
     "Isaacgc1999": {
-      "points": 280,
+      "points": 295,
       "rank": "Contributor"
     },
     "nujovich": {
@@ -90,6 +90,18 @@
       ],
       "points": 5,
       "date": "2026-06-02T13:14:53.468Z"
+    },
+    {
+      "prNumber": "26",
+      "prTitle": "feat(leaderboard): implement dynamic leaderboard display with user po…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/26",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:fix-doc",
+        "points:small-improvement"
+      ],
+      "points": 15,
+      "date": "2026-06-02T13:51:42.736Z"
     }
   ]
 }
