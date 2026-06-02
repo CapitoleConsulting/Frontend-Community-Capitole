@@ -1,22 +1,67 @@
 {
   "users": {
     "Isaacgc1999": {
-      "points": 15,
+      "points": 275,
+      "rank": "Contributor"
+    },
+    "nujovich": {
+      "points": 160,
+      "rank": "Contributor"
+    },
+    "angellogar": {
+      "points": 50,
+      "rank": "Rookie"
+    },
+    "hndcore": {
+      "points": 25,
       "rank": "Rookie"
     }
   },
   "history": [
     {
-      "prNumber": "22",
-      "prTitle": "Modify points workflow to use new PR creation action",
-      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/22",
+      "prNumber": "manual-retroactive-001",
+      "prTitle": "Retroactive points assignment - admin contribution",
+      "prUrl": "",
       "author": "Isaacgc1999",
-      "labels": [
-        "points:fix-doc",
-        "points:small-improvement"
-      ],
-      "points": 15,
-      "date": "2026-06-02T11:26:48.828Z"
+      "labels": ["manual:retroactive", "role:admin", "role:moderator"],
+      "points": 275,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-002",
+      "prTitle": "Retroactive points assignment - admin contribution",
+      "prUrl": "",
+      "author": "nujovich",
+      "labels": ["manual:retroactive", "role:admin", "role:moderator"],
+      "points": 160,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-003",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "angellogar",
+      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-004",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "angellogar",
+      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-005",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "hndcore",
+      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
     }
   ]
 }
