@@ -6,20 +6,6 @@ interface Props {
 }
 const { tagline = '' } = Astro.props;
 ---
-<section class="hero">
-  {tagline && <p class="hero__tagline">{tagline}</p>}
-  <div class="hero__actions">
-    <Button href="/docs/" intent="primary" size="lg" showArrow>Get started</Button>
-    <Button
-      href="https://github.com/IsaacGarcia-Capitole/Frontend-Community-Capitole"
-      intent="secondary"
-      size="lg"
-    >
-      View on GitHub
-    </Button>
-  </div>
-</section>
-
 <style>
   .hero {
     padding: var(--atrium-s-12) 0 var(--atrium-s-10);

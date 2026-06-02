@@ -5,37 +5,22 @@ title: Frontend Community
 import Card from '../../components/Card.astro';
 import CardGrid from '../../components/CardGrid.astro';
 import Hero from '../../components/Hero.astro';
-import pointsData from '../../../community-points.json';
 
 <Hero
   tagline="A collection of best practices, patterns and examples for frontend development at Capitole."
 /> 
 
 ## 🏆 Community Leaderboard
+<!-- LEADERBOARD:START -->
+| Position | User         | Points | Rank        |
+| -------: | ------------ | -----: | ----------- |
+|        1 | @Isaacgc1999 |    280 | Contributor |
+|        2 | @nujovich    |    160 | Contributor |
+|        3 | @angellogar  |     50 | Rookie      |
+|        4 | @hndcore     |     25 | Rookie      |
 
-<table>
-  <thead>
-    <tr>
-      <th>Position</th>
-      <th>User</th>
-      <th>Points</th>
-      <th>Rank</th>
-    </tr>
-  </thead>
-  <tbody>
-    {Object.entries(pointsData.users)
-      .sort(([, a], [, b]) => b.points - a.points)
-      .map(([user, info], index) => (
-        <tr>
-          <td>{index + 1}</td>
-          <td>@{user}</td>
-          <td>{info.points}</td>
-          <td>{info.rank}</td>
-        </tr>
-      ))}
-  </tbody>
-</table>
-
+*Last updated: 2026-06-02T00:00:00.000Z*
+<!-- LEADERBOARD:END -->
 ## Explore by framework
 
 <CardGrid stagger>

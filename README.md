@@ -18,6 +18,8 @@ This repository powers the Frontend Community portal, where all documentation, a
 
 ## 🏆 Community Leaderboard
 
+<!-- LEADERBOARD:START -->
+
 | Position | User         | Points | Rank        |
 | -------: | ------------ | -----: | ----------- |
 |        1 | @Isaacgc1999 |    280 | Contributor |
@@ -26,6 +28,8 @@ This repository powers the Frontend Community portal, where all documentation, a
 |        4 | @hndcore     |     25 | Rookie      |
 
 *Last updated: 2026-06-02T00:00:00.000Z*
+
+<!-- LEADERBOARD:END -->
 
 The leaderboard is automatically updated through GitHub Actions when approved contributions are merged.
 
