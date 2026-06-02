@@ -19,7 +19,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/Isaacgc1999/Frontend-Community-Capitole",
+          href: "https://github.com/CapitoleConsulting/Frontend-Community-Capitole",
         },
       ],
       sidebar: [
