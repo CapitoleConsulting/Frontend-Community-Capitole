@@ -2,6 +2,8 @@ const fs = require("fs");
 
 const POINTS_FILE = "community-points.json";
 const LEADERBOARD_FILE = "leaderboard.md";
+const README_FILE = "README.md";
+const HOME_FILE = "src/content/docs/index.mdx";
 
 const prAuthor = process.env.PR_AUTHOR;
 const prNumber = process.env.PR_NUMBER;
@@ -34,6 +36,45 @@ function getRank(points) {
   if (points >= 300) return "Advanced Contributor";
   if (points >= 100) return "Contributor";
   return "Rookie";
+}
+
+function generateLeaderboardMarkdown(data) {
+  const rows = Object.entries(data.users)
+    .sort((a, b) => b[1].points - a[1].points)
+    .map(([user, info], index) => {
+      return `| ${index + 1} | @${user} | ${info.points} | ${info.rank} |`;
+    })
+    .join("\n");
+
+  return `| Position | User | Points | Rank |
+|---:|---|---:|---|
+${rows}
+
+_Last updated: ${new Date().toISOString()}_`;
+}
+
+function replaceBlock(filePath, content) {
+  if (!fs.existsSync(filePath)) {
+    console.log(`File not found: ${filePath}. Skipping.`);
+    return;
+  }
+
+  const start = "<!-- LEADERBOARD:START -->";
+  const end = "<!-- LEADERBOARD:END -->";
+
+  const fileContent = fs.readFileSync(filePath, "utf8");
+
+  if (!fileContent.includes(start) || !fileContent.includes(end)) {
+    console.log(`Leaderboard markers not found in ${filePath}. Skipping.`);
+    return;
+  }
+
+  const updatedContent = fileContent.replace(
+    new RegExp(`${start}[\\s\\S]*?${end}`),
+    `${start}\n${content}\n${end}`
+  );
+
+  fs.writeFileSync(filePath, updatedContent);
 }
 
 let basePoints = 0;
@@ -86,22 +127,16 @@ data.history.push({
 
 fs.writeFileSync(POINTS_FILE, JSON.stringify(data, null, 2));
 
-const leaderboardRows = Object.entries(data.users)
-  .sort((a, b) => b[1].points - a[1].points)
-  .map(([user, info], index) => {
-    return `| ${index + 1} | @${user} | ${info.points} | ${info.rank} |`;
-  })
-  .join("\n");
+const leaderboardMarkdown = generateLeaderboardMarkdown(data);
 
-const leaderboard = `# Frontend Community Leaderboard
+const fullLeaderboard = `# Frontend Community Leaderboard
 
-| Posición | Usuario | Puntos | Rango |
-|---:|---|---:|---|
-${leaderboardRows}
-
-_Last updated: ${new Date().toISOString()}_
+${leaderboardMarkdown}
 `;
 
-fs.writeFileSync(LEADERBOARD_FILE, leaderboard);
+fs.writeFileSync(LEADERBOARD_FILE, fullLeaderboard);
+
+replaceBlock(README_FILE, leaderboardMarkdown);
+replaceBlock(HOME_FILE, leaderboardMarkdown);
 
 console.log(`Awarded ${basePoints} points to ${prAuthor}`);

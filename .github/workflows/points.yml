@@ -50,3 +50,5 @@ jobs:
           add-paths: |
             community-points.json
             leaderboard.md
+            README.md
+            src/content/docs/index.mdx
