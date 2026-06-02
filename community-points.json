@@ -1,7 +1,7 @@
 {
   "users": {
     "Isaacgc1999": {
-      "points": 275,
+      "points": 280,
       "rank": "Contributor"
     },
     "nujovich": {
@@ -23,7 +23,11 @@
       "prTitle": "Retroactive points assignment - admin contribution",
       "prUrl": "",
       "author": "Isaacgc1999",
-      "labels": ["manual:retroactive", "role:admin", "role:moderator"],
+      "labels": [
+        "manual:retroactive",
+        "role:admin",
+        "role:moderator"
+      ],
       "points": 275,
       "date": "2026-06-02T00:00:00.000Z"
     },
@@ -32,7 +36,11 @@
       "prTitle": "Retroactive points assignment - admin contribution",
       "prUrl": "",
       "author": "nujovich",
-      "labels": ["manual:retroactive", "role:admin", "role:moderator"],
+      "labels": [
+        "manual:retroactive",
+        "role:admin",
+        "role:moderator"
+      ],
       "points": 160,
       "date": "2026-06-02T00:00:00.000Z"
     },
@@ -41,7 +49,10 @@
       "prTitle": "Retroactive points assignment - useful guide or pattern",
       "prUrl": "",
       "author": "angellogar",
-      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
       "points": 25,
       "date": "2026-06-02T00:00:00.000Z"
     },
@@ -50,7 +61,10 @@
       "prTitle": "Retroactive points assignment - useful guide or pattern",
       "prUrl": "",
       "author": "angellogar",
-      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
       "points": 25,
       "date": "2026-06-02T00:00:00.000Z"
     },
@@ -59,9 +73,23 @@
       "prTitle": "Retroactive points assignment - useful guide or pattern",
       "prUrl": "",
       "author": "hndcore",
-      "labels": ["manual:retroactive", "points:guide-pattern"],
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
       "points": 25,
       "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "24",
+      "prTitle": "chore(points): update user points and ranks for leaderboard",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/24",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:fix-doc"
+      ],
+      "points": 5,
+      "date": "2026-06-02T13:14:53.468Z"
     }
   ]
 }
