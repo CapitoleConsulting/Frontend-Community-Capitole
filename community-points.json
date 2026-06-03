@@ -1,7 +1,7 @@
 {
   "users": {
     "Isaacgc1999": {
-      "points": 325,
+      "points": 355,
       "rank": "Advanced Contributor"
     },
     "nujovich": {
@@ -115,6 +115,19 @@
       ],
       "points": 30,
       "date": "2026-06-02T14:17:27.584Z"
+    },
+    {
+      "prNumber": "30",
+      "prTitle": "fix(leaderboard): update leaderboard markers for MDX compatibility",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/30",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement",
+        "bonus:utility",
+        "bonus:community-used"
+      ],
+      "points": 30,
+      "date": "2026-06-03T07:12:45.751Z"
     }
   ]
 }
