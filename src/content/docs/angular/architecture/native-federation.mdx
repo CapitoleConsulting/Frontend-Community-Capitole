@@ -1,0 +1,156 @@
+---
+title: Native Federation (esbuild & Vite)
+description: A modern, build-tool-agnostic alternative to classic Webpack Module Federation in Angular.
+---
+
+# Microfrontends with Angular & Native Federation
+
+In modern Angular applications (from version 17 onwards, including 18 and 19), classical Webpack-based Module Federation exhibits a major architectural drawback: it **forces the build pipeline to use the legacy Webpack compiler** instead of the extremely fast, native **esbuild**-based Application Builder (`@angular-devkit/build-angular:application`).
+
+To get the best of both worlds—modular microfrontend scalability and near-instant esbuild compilation speeds—the Angular ecosystem leverages **Native Federation** (developed by the `@angular-architects` team led by Manfred Steyer).
+
+---
+
+## 1. What is Native Federation?
+
+Native Federation is a build-tool agnostic implementation of Module Federation. Instead of relying on Webpack's internal runtime loader, it executes directly on top of native browser Web Standards:
+*   **Browsers-Native ES Modules (ESM)** to resolve, download, and load modules dynamically at runtime.
+*   **Import Maps** to negotiate and coordinate shared package versions between the Host/Shell and Remote MFEs in the browser.
+
+Because it operates at the ES Module level rather than hooking into custom Webpack bundler internals, it works out-of-the-box with any modern compiler (**esbuild, Vite, Rollup, Webpack**) and fully supports development-oriented setups like Vite-powered dev servers.
+
+### Core Architectural Concepts (Manfred Steyer's Design)
+1. **Tooling-Agnostic Engine**: Native Federation acts as a lightweight compilation wrapper. It delegates bundling to the underlying builder (like Angular's `ApplicationBuilder` powered by `esbuild`) and then compiles a metadata descriptor file: `remoteEntry.json`.
+2. **Standardized Communication**: It communicates with bundlers via exchangeable adapters, guaranteeing future-proof integration regardless of subsequent internal Angular CLI compiler innovations.
+3. **Severe Compile-Time & Runtime Independence**: By switching from compile-time resolution to runtime ES Modules, teams get absolute deployment autonomy. However, this relies on a formal versioning negotiation in the browser.
+4. **Dynamic Manifests**: Native Federation natively supports dynamic hosts. Instead of hardcoding remote URLs at build-time, you can pass a `federation.manifest.json` file during bootstrap, allowing systems to swap upstream remote addresses dynamically in production or use an API registry service.
+5. **Modern Feature Compatibility**: Unlike Webpack Module Federation, Native Federation supports advanced CLI operations natively, including **Server-Side Rendering (SSR)** and **Hydration**, which are essential for performance-critical architectures.
+
+---
+
+## 2. Step-by-Step Implementation Guide
+
+Follow this guide to initialize, configure, and orchestrate a Host Shell and Remote microfrontends using Native Federation.
+
+### Step 1: Add Native Federation dependency to your workspace
+Instead of using the classic module federation bundle, add Native Federation using the official schematics.
+
+For the **Host/Shell Application**:
+```bash
+ng add @angular-architects/native-federation --type host
+```
+
+For a **Remote Application**:
+```bash
+ng add @angular-architects/native-federation --type remote
+```
+
+This schematic command:
+1. Adjusts your `angular.json` build mapping to utilize Native Federation wrappers.
+2. Generates a simplified, standalone `federation.config.js` in the application's root directory.
+3. Sets up an asynchronous bootstrap system (`main.ts` loading `bootstrap.ts` dynamically).
+
+---
+
+### Step 2: Configure `federation.config.js`
+Unlike `webpack.config.js` which is highly verbose, Native Federation relies on a clean, declarative configuration file. Additionally, you can utilize the `skip` array to prune unneeded RxJS paths or libraries from runtime sharing to optimize performance and prevent bundle bloating:
+
+```javascript
+const { withNativeFederation, shareAll } = require('@angular-architects/native-federation/config');
+
+module.exports = withNativeFederation({
+  // Unique name identifying this remote
+  name: 'coreFeatureRemote',
+
+  // Expose components, routing modules or services
+  exposes: {
+    './Component': './src/app/feature-entry/feature-entry.component.ts',
+  },
+
+  // Share dependencies as ES Modules
+  shared: {
+    ...shareAll({ 
+      singleton: true, 
+      strictVersion: true, 
+      requiredVersion: 'auto' 
+    }),
+  },
+
+  // Skip sharing minor or secondary entry points to keep the runtime payload small
+  skip: [
+    'rxjs/ajax',
+    'rxjs/fetch',
+    'rxjs/testing',
+    'rxjs/webSocket',
+  ]
+});
+```
+
+---
+
+### Step 3: Initialize Dynamic Import Maps in `main.ts`
+During bootstrap, the Shell needs to resolve the locations of all remotes' `remoteEntry.json` metadata files to construct the local browser import maps. This can be hardcoded or loaded dynamically via a standalone JSON manifest file (e.g., `federation.manifest.json`), which is ideal for multi-environment deployments (such as dev, sandbox, production):
+
+```typescript
+import { initFederation } from '@angular-architects/native-federation';
+
+// Option A: Hardcoded runtime loading (simple setups)
+/*
+initFederation({
+  'coreFeatureRemote': 'http://localhost:4201/remoteEntry.json'
+})
+*/
+
+// Option B: Multi-environment Dynamic Manifest Loading (Recommended for Enterprise)
+initFederation('federation.manifest.json')
+  .catch((err) => console.error('Error loading dynamic configuration manifest:', err))
+  .then(() => import('./bootstrap'))
+  .catch((err) => console.error('Bootstrap integration error:', err));
+```
+
+The dynamic `federation.manifest.json` placed inside your host's dynamic output folder (usually `/public` or `/assets`) simply references the remote directories:
+```json
+{
+  "coreFeatureRemote": "http://localhost:4201/remoteEntry.json"
+}
+```
+
+---
+
+### Step 4: Router Dynamic Loading
+To load exposed remote components or modules dynamically inside your Angular Host Router, resolve dependencies via the `loadRemoteModule` utility:
+
+```typescript
+import { Routes } from '@angular/router';
+import { loadRemoteModule } from '@angular-architects/native-federation';
+
+export const routes: Routes = [
+  {
+    path: 'core-feature',
+    loadComponent: () =>
+      loadRemoteModule('coreFeatureRemote', './Component').then((m) => m.FeatureComponent),
+  },
+  {
+    path: '**',
+    redirectTo: 'core-feature',
+    pathMatch: 'full'
+  }
+];
+```
+
+---
+
+## 3. Comparison and Orchestration Choices
+
+To understand the core differences between Native Federation, Webpack Module Federation, and framework-agnostic lifecycle managers like Single-SPA, check out our comprehensive [src/content/docs/angular/architecture/federation-comparison.mdx](src/content/docs/angular/architecture/federation-comparison.mdx) handbook.
+
+In addition, before migrating to a distributed system, review the architectural trade-offs, potential drawbacks, and common runtime troubleshooting approaches (such as the eager consumption error and Zone.js conflicts) in our [src/content/docs/angular/architecture/federation-common-issues.mdx](src/content/docs/angular/architecture/federation-common-issues.mdx) guide.
+
+---
+
+## References
+
+- [Micro-Frontends with Angular 19 and Native Federation](https://medium.com/@luca.cossaro_28192/micro-frontends-with-angular-19-and-module-federation-83ba7a7b6a13)
+- [Micro Frontends with Angular and Native Federation - official Angular Blog](https://blog.angular.dev/micro-frontends-with-angular-and-native-federation-7623cfc5f413)
+- [Microfrontends with Angular: Multirepo](https://medium.com/@igorm573/microfrontends-with-angular-multirepo-19b3e9ec4945)
+- [Mastering Module Federation - Part 1](https://medium.com/@srijans7/mastering-module-federation-part-1)

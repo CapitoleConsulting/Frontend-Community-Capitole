@@ -1,0 +1,181 @@
+---
+title: Dynamic Federation in Nx Monorepos
+description: A complete guide to setting up static and transitioning to dynamic module federation within an Nx integrated monorepo.
+---
+
+# Implementing Dynamic Module Federation in Angular with Nx
+
+When working on enterprise-scale Angular projects, managing microfrontends individually in separate repositories (Multirepo) can introduce deployment overhead and library coordination bottlenecks. To solve this, **Nx Monorepos** provide a highly optimized environment that pairs dynamic Module Federation with incremental builds, centralized task caching, and shared library packaging.
+
+This guide details how to scaffold, configure, and transition from **Static** to **Dynamic Module Federation** using native Nx Angular plugins.
+
+---
+
+## 1. Setting Up the Nx Monorepo Workspace
+
+An Nx integrated workspace maintains a single git repository with shared workspace configurations, making it extremely easy to scaffold host and remote microfrontends, run commands in parallel, and cache build outputs.
+
+### Step 1: Install Nx globally
+```bash
+npm install -g nx
+```
+
+### Step 2: Initialize a new Angular Nx Workspace
+Execute the workspace generator and select the **Angular** stack, the **Integrated Monorepo** layout, and the **Webpack** bundler:
+```bash
+npx create-nx-workspace core-workspace --preset=angular --layout=integrated --bundler=webpack
+```
+
+---
+
+## 2. Scaffolding Host and Remote Apps in Nx
+
+Nx provides specialized code generators (`@nx/angular:host` and `@nx/angular:remote`) that auto-configure Webpack, Module Federation configurations, dynamic bootstraps, and TypeScript path mappings out-of-the-box.
+
+### Step 1: Generate the Host Application (administrative shell)
+```bash
+nx g @nx/angular:host apps/portal-shell --prefix=portal
+```
+
+### Step 2: Generate the Remote Application linked to the Host
+```bash
+nx g @nx/angular:remote apps/recursos-remote --prefix=recursos --host=portal-shell
+```
+
+By supplying the `--host=portal-shell` option, the generator automatically:
+*   Registers the remote inside the host's `module-federation.config.ts`.
+*   Adds TypeScript path mappings under the root `tsconfig.base.json`.
+*   Appends a lazy-loaded route targeting the remote inside the host's `apps/portal-shell/src/app/app.routes.ts`.
+
+---
+
+## 3. Under the Hood: What Nx Generates
+
+Unlike basic Angular projects where you configure everything manually, the Nx generator automates the scaffolding:
+1.  **`module-federation.config.ts`**: The lightweight, simplified federation settings file.
+2.  **`webpack.config.ts` & `webpack.prod.config.ts`**: Webpack overrides executing behind the scenes.
+3.  **`src/bootstrap.ts`**: Houses standard client bootstrapping code (`bootstrapApplication`).
+4.  **`src/main.ts`**: Dynamically imports `bootstrap.ts` asynchronously. This asynchronous barrier is required for Webpack to resolve and negotiate shared module versions before booting up Angular.
+5.  **`project.json` Executors**:
+    - The build target uses `@nx/angular:webpack-browser` to inject custom Webpack settings.
+    - The serve target uses `@nx/angular:dev-server` to run development environments.
+
+### Serving with Local Remotes
+To start your host dashboard and spin up all connected remotes simultaneously:
+```bash
+nx serve portal-shell --devRemotes=recursos-remote
+```
+
+---
+
+## 4. Transitioning to Dynamic Module Federation
+
+Static Module Federation defines remote locations at build-time. This forces your bundles to point to static addresses (e.g. `http://localhost:4201`), which breaks continuous delivery pipelines as remotes must target separate dynamic stages (development, sandbox, production) without rebuilding.
+
+**Dynamic Module Federation** resolves these locations at runtime using a remote configuration manifest.
+
+```
++------------------------------------+
+|            portal-shell            |
++-----------------+------------------+
+                  |
+         (Reads manifest JSON)
+                  v
++-----------------+------------------+
+| module-federation.manifest.json    |
+| { "recursos-remote": "http... " }  |
++-----------------+------------------+
+                  |
+        (Loads ESM chunks)
+                  v
++-----------------+------------------+
+|          recursos-remote_          |
++------------------------------------+
+```
+
+### Step 1: Create the Manifest JSON
+In your Host Shell (`apps/portal-shell`), add a `module-federation.manifest.json` under your assets directory (`src/assets/`):
+
+```json
+{
+  "recursosRemote": "http://localhost:4201"
+}
+```
+
+### Step 2: Clear static maps from Host Config
+Open `apps/portal-shell/module-federation.config.ts` and ensure the static `remotes` array is empty:
+
+```typescript
+import { ModuleFederationConfig } from '@nx/devkit';
+
+const config: ModuleFederationConfig = {
+  name: 'portal-shell',
+  remotes: [], // Keep empty to enforce runtime dynamic resolution
+};
+
+export default config;
+```
+
+### Step 3: Update `main.ts` to Fetch the Manifest
+Modify the Host Shell's `src/main.ts` to fetch this dynamic JSON manifest and register remote targets dynamically using native Nx utilities:
+
+```typescript
+import { setRemoteDefinitions } from '@nx/angular/mf';
+
+fetch('/assets/module-federation.manifest.json')
+  .then((res) => res.json())
+  .then((definitions) => setRemoteDefinitions(definitions))
+  .then(() => import('./bootstrap'))
+  .catch((err) => console.error('Error dynamic bootstrapping portal shell:', err));
+```
+
+### Step 4: Load Remote Modules via Routes
+Update the Host's path rules (`app.routes.ts`) using the dynamic `loadRemoteModule` utility supplied by `@nx/angular/mf`:
+
+```typescript
+import { Routes } from '@angular/router';
+import { loadRemoteModule } from '@nx/angular/mf';
+
+export const routes: Routes = [
+  {
+    path: 'recursos',
+    loadChildren: () =>
+      loadRemoteModule('recursosRemote', './Routes')
+        .then((m) => m.remoteRoutes)
+        .catch((err) => console.error('Error dynamic loading remote routes:', err)),
+  },
+  {
+    path: '**',
+    redirectTo: 'recursos',
+    pathMatch: 'full'
+  }
+];
+```
+
+---
+
+## 5. Summary of Benefits in Nx Monorepos
+
+1.  **Incremental Rebuilds**: Nx detects changes inside files and only recompiles files or libraries impacted by those precise lines, minimizing task duration.
+2.  **Shared Library Integration (`libs/`)**: Easily extract shared utilities, models, or layouts. Remotes and hosts can import them natively through automatically maintained deep TypeScript path aliases.
+3.  **Unified linting & testing targets**: Running tests and lints across all federated modules is as simple as launching:
+    ```bash
+    nx run-many -t test -p portal-shell recursos-remote
+    ```
+
+---
+
+## 6. Addressing Common Runtime Issues and Pitfalls
+
+While Nx simplifies developer productivity, dynamic configurations and shared compile configurations inside monorepos are still prone to deployment boundaries issues, eager consumption errors, and CORS constraints at runtime.
+
+For a full breakdown of troubleshooting strategies to keep your dynamic Nx federated system running smoothly, check out our [src/content/docs/angular/architecture/federation-common-issues.mdx](src/content/docs/angular/architecture/federation-common-issues.mdx) handbook.
+
+---
+
+## References
+
+- [Angular Micro Frontends Simplified: Implementing Dynamic Module Federation with Nx](https://medium.com/@manoharmano.taneti/angular-micro-frontends-simplified-implementing-dynamic-module-federation-with-nx-a7a3ddc951eb)
+- [Module Federation and Nx guide](https://nx.dev/concepts/key-concepts/module-federation)
+- [Enterprise Micro Frontends with Angular and Webpack Module Federation - Nx Docs](https://nx.dev/recipes/angular/migration/module-federation)
+- [Mastering Module Federation - Part 1](https://medium.com/@srijans7/mastering-module-federation-part-1)

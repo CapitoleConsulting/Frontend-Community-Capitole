@@ -1,0 +1,89 @@
+---
+title: Federation Comparison (MF vs. NF vs. Single-SPA)
+description: A detailed architectural breakdown distinguishing Webpack Module Federation, Native Federation, and Single-SPA.
+---
+
+# Webpack Module Federation vs. Native Federation vs. Single-SPA
+
+Choosing the right orchestration mechanism for your Microfrontend (MFE) architecture is a critical design decision. Each approach addresses runtime composition differently, featuring unique trade-offs, dependencies, and complex setups.
+
+This guide provides a comprehensive comparison based on the three leading paradigms in the modern Javascript ecosystem: **Webpack Module Federation (MF)**, **Native Federation (NF)**, and **Single-SPA**.
+
+---
+
+## 1. Architectural Paradigms
+
+### A. Webpack Module Federation (MF)
+*Introduced in Webpack 5 (2020)*. 
+Module Federation hooks directly into the compilation lifecycles of its bundler. It enables dynamic import negotiation in the browser by generating proprietary Webpack orchestration wrappers.
+
+*   **How it works**: The compiler spits out a `remoteEntry.js` containing Webpack-specific runtime loading code. When a host imports a remote, Webpack intercepts the query and dynamically serves the remote chunk.
+*   **Key Strength**: Highly mature, battles-tested, and handles dependency deduplication seamlessly *provided* all apps use Webpack.
+*   **Limitation**: Hard-coupled to Webpack. Migrating to modern lightning-fast compilers like *Vite* or *esbuild* exposes severe build limitations.
+
+### B. Native Federation (NF)
+*Developed by Manfred Steyer (2023)*.
+Native Federation was designed to completely decouple federation concepts from bundlers by building strictly on top of browser standards rather than compiler-specific loaders.
+
+*   **How it works**: It operates on browser **import maps** and standard **ES Modules (ESM)**. Standard compilers copy over code, and Native Federation resolves dynamic modules natively at runtime through standard JavaScript imports.
+*   **Key Strength**: Compiles at near-instantaneous speeds using *esbuild* / *Vite*, future-proof, support for SSR and hydration.
+*   **Limitation**: Emerging ecosystem. Requires packages to follow modern standards (like the Angular Package Format) and can introduce configuration overhead in legacy architectures using CommonJS.
+
+### C. Single-SPA
+*One of the earliest MFE frameworks (2018)*.
+Single-SPA is a framework-agnostic meta-router. Instead of acting as a module bundler, it manages the complete lifecycles of multi-framework applications running inside the same single-page frame.
+
+*   **How it works**: It orchestrates individual applications through hooks (`bootstrap`, `mount`, `unmount`). The host uses single-spa's API to orchestrate mounting React, Angular, or Vue clients based on the URL path.
+*   **Key Strength**: Complete framework independence. Perfect for migrating older legacy multi-framework monoliths into a single cohesive UI.
+*   **Limitation**: Adds massive runtime complexity. Teams have to coordinate orchestration lifecycles manually, bundle sizes are significantly larger, and dependency sharing is less automated compared to federation engines.
+
+---
+
+## 2. In-Depth Comparison Matrix
+
+| Dimensional Criteria | Webpack Module Federation (MF) | Native Federation (NF) | Single-SPA |
+| :--- | :--- | :--- | :--- |
+| **Tooling Dependency** | Hard-coupled to **Webpack** (or Rspack) | **Tooling-agnostic** (Vite, esbuild, Webpack) | **Compiler-agnostic** (Uses lifecycle managers) |
+| **Bundling Speeds** | Slower (Significant Webpack wrapper overhead) | **Ultra-fast** (Powered by esbuild/Vite compiling) | Standard speeds (Depends on each app's builder) |
+| **Runtime Resolution** | Webpack Proprietary Runtime Loader | **Browser-Native ES Modules & Import Maps** | Dynamic SystemJS / ESM imports |
+| **Dependency Sharing** | Fully automatic via runtime negotiation | Natively via shared ESM registries | Manual global registrations (SystemJS / import maps) |
+| **Framework Coexistence** | Best when sharing same platform stack | Tailored for modern clean architectures (APF / ESM) | **Excellent** (Built specifically for multi-framework coexistence) |
+| **AOT & SSR Support** | Standard client AOT only | Native SSR and Hydration support | Requires specialized lifecycle custom wrappers |
+| **Complexity** | High Webpack configuration verbosity | Low (Uses simple, declarative `federation.config.js`) | Very high (Manual lifecycle & loader coordination) |
+
+---
+
+## 3. Recommended Use Cases
+
+### When to choose Webpack Module Federation
+*   Your enterprise ecosystem relies heavily on established Webpack configurations and plugins.
+*   Your microfrontends share a unified, single framework version (e.g. all projects run on the same major Angular series).
+*   You require a highly stable, mature ecosystem with extensive community solutions.
+
+### When to choose Native Federation
+*   You are building modern Angular projects (Angular 17, 18, 19) and want near-instantaneous build performance using **esbuild** / **Vite**.
+*   You prioritize browser-native web standards (ES Modules, import maps) over compiler-proprietary runtime hacks.
+*   Your application is critical for performance/SEO, and you require **Server-Side Rendering (SSR)** and **Hydration** out-of-the-box.
+
+### When to choose Single-SPA
+*   You have a large legacy application and must mix multiple client-side frameworks simultaneously (e.g., embedding old Vue and React features inside an Angular shell).
+*   You require manual, fine-grained control over mounting and unmounting lifecycles.
+*   You are willing to accept additional development and routing setup complexity to achieve complete framework-agnostic client isolation.
+
+---
+
+## 4. Navigating Common Pitfalls and Next Steps
+
+No matter which federation pattern or orchestrator you select, distributed applications introduce shared dependency mismatches, eager consumption errors, CORS policies, and styling contamination.
+
+To ensure your engineering guild steers clear of these pitfalls, explore our troubleshooting guide and architectural limits assessment at [src/content/docs/angular/architecture/federation-common-issues.mdx](src/content/docs/angular/architecture/federation-common-issues.mdx).
+
+---
+
+## References
+
+- [Understanding the Difference Between Native Federation, Module Federation, and Single-Spa](https://medium.com/@erickzanetti/understanding-the-difference-between-difference-from-native-federation-module-federation-and-single-spa-6cd6d29029b5)
+- [Micro Frontends with Angular and Native Federation - official Angular Blog](https://blog.angular.dev/micro-frontends-with-angular-and-native-federation-7623cfc5f413)
+- [Micro-Frontends with Angular 19 and Native Federation](https://medium.com/@luca.cossaro_28192/micro-frontends-with-angular-19-and-module-federation-83ba7a7b6a13)
+- [Implementing Dynamic Module Federation with Nx](https://medium.com/@manoharmano.taneti/angular-micro-frontends-simplified-implementing-dynamic-module-federation-with-nx-a7a3ddc951eb)
+- [Mastering Module Federation - Part 1](https://medium.com/@srijans7/mastering-module-federation-part-1)

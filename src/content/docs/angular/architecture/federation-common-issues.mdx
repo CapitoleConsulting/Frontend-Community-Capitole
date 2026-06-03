@@ -1,0 +1,233 @@
+---
+title: Federation Common Issues & Trade-offs
+description: A complete handbook detailing the architectural design decisions, trade-offs, and critical troubleshooting guides for Module Federation.
+---
+
+# Module Federation: Common Issues & Architectural Trade-offs
+
+Adopting a microfrontend (MFE) architecture using Webpack Module Federation or Native Federation is a major architectural commitment. While it resolves significant scaling limitations for multi-team workforces, it introduces fresh, complex categories of runtime faults, dependency arbitration issues, and network constraints.
+
+This guide explores when Module Federation serves as an architectural **savior**, when it behaves as an **anti-pattern**, and provides a deep-dive troubleshooting handbook to address the most common runtime issues in production environments.
+
+---
+
+## 1. Architectural Trade-offs: Savior vs. Anti-pattern
+
+Before adopting Module Federation, organizations must perform a thorough cost-benefit analysis. Building an application over a distributed architecture is significantly harder than managing a cohesive monolithic codebase.
+
+### When Module Federation is a Savior (The Scaling Solution)
+
+At a certain organizational size, traditional single-page application (SPA) architectures encounter severe developer velocity bottlenecks. Srijan Singh highlights the core pain points that Module Federation solves:
+
+*   **Continuous PR Blockages**: In large monoliths, dozens of developers merge code into the same branch daily. This causes constant merge conflicts, rebuild queues, and release coordination bottlenecks. MFEs isolate domains so teams merge and deploy entirely within their own repositories.
+*   **Massive Build Times**: If a simple text change requires running a CI/CD pipeline that compiles a 500,000-line codebase (often taking 30–45 minutes), team feedback loops stall. MFEs break compilation into micro-builds, reducing individual team CI steps to seconds or a few minutes.
+*   **Divergent Copy-and-Paste Components**: When separate projects copy code from each other, subtle forks emerge, leading to inconsistent look-and-feel and duplicate efforts. Module Federation allows teams to publish and dynamically share widgets at runtime without publishing new NPM packages.
+*   **Single-Point-of-Failure Deployments**: If a single bug in a low-priority route can crash the entire application for all users during boot, system availability is fragile. Module Federation isolates remotes; if a remote route crashes or fails to load, the host container can gracefully catch the error and keep other sections operational.
+
+### When Module Federation is an Anti-pattern (The Over-engineering Trap)
+
+Federation is **not** a general best practice for all web projects. It acts as an anti-pattern in the following scenarios:
+
+*   **Small Teams (Under 20–30 Developers)**: If a single team or a small group of highly coordinated developers manages the application, introducing Module Federation adds massive operational overhead (CI configurations, dynamic routes, complex local mock setups) with no clear benefit.
+*   **Rapidly Evolving Shared Core Models**: If the host and remotes constantly undergo coupled changes to their core contracts or shared API schemas, the team must coordinate releases synchronously anyway. This defeats the primary purpose of independent deployability and creates fragile runtime dependency errors.
+*   **Duplicate Dependency Bloating**: Without strict sharing rules, each remote might bundle its own copy of heavy libraries (such as Angular core, Material, RxJS, or charting engines). This results in users downloading multiple megabytes of duplicate Javascript, severely harming Core Web Vitals and initial loading speeds.
+
+---
+
+## 2. Critical Runtime Troubleshooting Handbook
+
+Distributed applications require runtime coordination. Below are the most common Module Federation issues and concrete patterns to solve them.
+
+### Issue 1: "Shared module is not available for eager consumption"
+
+This is the most notorious error in Webpack Module Federation. It occurs when a bundle tries to execute synchronous code that relies on a shared library (such as `@angular/core`) *before* Module Federation has finished negotiating dependency versions with other remotes.
+
+```plaintext
+Uncaught Error: Shared module is not available for eager consumption
+  at Object.get (index.js:12)
+  at __webpack_require__.m (main.js:25)
+```
+
+#### The Root Cause
+Webpack must boot asynchronously to download the dependency maps and select the compatible shared singleton libraries. If the initial entry point executes synchronously, negotiations cannot occur.
+
+#### The Solution: Asynchronous Bootstrapping
+To resolve this, split your startup sequence. Move the startup logic into a file called [src/bootstrap.ts](src/bootstrap.ts), and let your main entry file [src/main.ts](src/main.ts) import it dynamically.
+
+1. Create or verify your [src/bootstrap.ts](src/bootstrap.ts):
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, appConfig)
+  .catch((err) => console.error(err));
+```
+
+2. Rewrite your main entry point [src/main.ts](src/main.ts) to utilize a dynamic import:
+```typescript
+// The dynamic import acts as an asynchronous boundary.
+// This gives Webpack the gap it needs to negotiate shared singletons.
+import('./bootstrap').catch((err) => console.error(err));
+```
+
+Make sure that [angular.json](angular.json) refers to [src/main.ts](src/main.ts) as the main file, not [src/bootstrap.ts](src/bootstrap.ts).
+
+---
+
+### Issue 2: Version Mismatch & Singleton Conflicts
+
+If the Host expects version `18.2.0` of a library but a loaded remote demands version `17.1.0` of the same library, conflicts arise. If the library (such as RxJS, NgRx, or Angular Core) maintains stateful singletons, loading it twice will result in runtime errors (e.g. `rxjs` operators failing to cast types, or missing service injection tokens).
+
+#### The Solution: Sharing Policy in webpack.config.js
+Configure explicit sharing policies inside [webpack.config.js](webpack.config.js) under the `shared` property:
+
+```javascript
+const { shareAll, withModuleFederationPlugin } = require('@angular-architects/module-federation/webpack');
+
+module.exports = withModuleFederationPlugin({
+  // Libraries can be shared explicitly to maintain singletons
+  shared: {
+    '@angular/core': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
+    '@angular/common': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
+    '@angular/router': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
+    'rxjs': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
+  },
+});
+```
+
+*   `singleton: true`: Ensures only one instance of the module is loaded in the entire client session.
+*   `strictVersion: true`: Forces the host/remote to fail fast or print explicit warnings if a remote requests an incompatible package version, avoiding silent and hard-to-debug runtime failures.
+*   `requiredVersion: 'auto'`: Looks at [package.json](package.json) to automatically determine compatible semver ranges.
+
+---
+
+### Issue 3: CORS and Preflight (OPTIONS) Failures
+
+Because remotes run on distinct servers or ports during local development or production, hosts must fetch their remote entry files and assets across origins. This triggers Cross-Origin Resource Sharing (CORS) security policies in the browser.
+
+```plaintext
+Access to script at 'http://localhost:4201/remoteEntry.js' from origin 'http://localhost:4200' 
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present.
+```
+
+#### The Solution
+Configure the web server hosting the remote files (e.g., Nginx, Apache, or local Webpack dev server) to attach appropriate headers.
+
+For local development using [proxy.conf.js](proxy.conf.js) or Webpack dev server config:
+```javascript
+// Add these headers to your devServer block or local mock servers
+devServer: {
+  headers: {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+    "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
+  }
+}
+```
+
+In production, ensure your Content Delivery Network (CDN) or cloud storage bucket hosting remote bundles returns `Access-Control-Allow-Origin: *` or explicitly allows the host domain.
+
+---
+
+### Issue 4: Dynamic Remote Loading Failures (CORS/Network Disconnects)
+
+When loading remotes dynamically via code, network drops or deployment sequences can temporarily take down a remote bundle. A direct, unhandled `loadRemoteModule` call will crash the current routing transition.
+
+#### The Solution: Resilient Route Error Handling
+Wrap dynamic component/module imports in standard try-catch blocks or build defensive loading utilities:
+
+```typescript
+import { Route } from '@angular/router';
+import { loadRemoteModule } from '@angular-architects/module-federation';
+
+export const routes: Route[] = [
+  {
+    path: 'features-remote',
+    loadComponent: () =>
+      loadRemoteModule({
+        type: 'manifest',
+        remoteName: 'recursos-remote',
+        exposedModule: './Component'
+      })
+      .then((m) => m.FeatureComponent)
+      .catch((err) => {
+        console.error('Failed to load Microfrontend resources dynamically:', err);
+        // Fallback to a user-friendly error component rather than crashing the route
+        return import('@shared/components/mfe-error.component')
+          .then((m) => m.MfeErrorComponent);
+      })
+  }
+];
+```
+
+---
+
+### Issue 5: Local Mocking Limitations
+
+When developing a remote MFE locally, you might want to run it in isolation (standing up a local dev server) or test its integration directly within a locally running Host container on standard mock ports.
+
+#### The Protocol for ams-mocks
+Our standard mocks directory [ams-mocks/mocks](ams-mocks/mocks) or service [ams-mocks/index.js](ams-mocks/index.js) must be running on port `1080` or the designated API proxy port to prevent route resolutions from hitting dead environments.
+
+Common developers trap:
+*   Developing features in a remote MFE, assuming global relative assets.
+*   *Correction*: Always construct asset URLs dynamically using the remote's actual base URL or ensure assets are routed relatively via proxy mappings. For example:
+```typescript
+// Avoid doing this:
+this.iconPath = 'assets/icons/info.svg'; // Will resolve on Host's domain!
+
+// Use this pattern instead:
+import { Inject, Injectable } from '@angular/core';
+import { REMOTE_BASE_URL } from './tokens';
+
+@Injectable()
+export class AssetService {
+  constructor(@Inject(REMOTE_BASE_URL) private baseUrl: string) {}
+
+  getAssetUrl(path: string): string {
+    return `${this.baseUrl}/${path}`;
+  }
+}
+```
+
+---
+
+### Issue 6: Multiple Zone.js Instances
+
+Angular's classic change detection relies on `zone.js`. In a Module Federation configuration, loading `zone.js` multiple times (once for host, and once in each dynamic bundle remote) degrades performance, causes state synchronization faults, and leads to infinite change detection cycles.
+
+#### The Solution
+Ensure `zone.js` is loaded exactly **once** in the host container's entry points.
+
+1. Ensure `zone.js` is declared in the Host's [src/index.html](src/index.html) or [src/main.ts](src/main.ts) under scripts/polyfills.
+2. In the remote MFEs, exclude `zone.js` from being processed or loaded. Within modern Angular 18/19 implementations, you should prefer migrating your remote applications to OnPush change detection and eventually a zoneless change detection loop.
+
+To opt out of Zone.js entirely at the bootstrap level of a remote when running under the host shell, configure zoneless inside the application providers:
+
+```typescript
+import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+
+export const appConfig = {
+  providers: [
+    provideExperimentalZonelessChangeDetection(),
+    // other providers...
+  ]
+};
+```
+
+---
+
+## 3. Dedicated References
+
+To deepen your understanding, consult these expert articles and community-validated resources:
+
+*   **Vasanthan K - Cross-App Communication in Micro Frontends**: Detailed guide on establishing secure event buses, custom browser listeners, and shared global states. [Cross-App Communication Pattern guide](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
+*   **Srijan Singh - Mastering Module Federation Part 1**: Explains team constraints, bottlenecks of monolithic structures, and deployment autonomy trade-offs. [Mastering Module Federation](https://medium.com/@srijans7/mastering-module-federation-part-1)
+*   **Manfred Steyer - Module Federation in Angular**: Comprehensive implementation techniques, dynamically-registered manifests, and compilation-agnostic import maps. [Angular Architects Blog](https://www.angular-architects.io/blog/)
+*   **Egor Malyshev - Microfrontends Architecture Guide**: A complete study of client-side runtime dependency orchestration, security layers, and shared state across distributed UI packages.
+*   **Shared Communication Playbook**: For a deep exploration of designing strongly-typed Event Buses and shared Signal States inside Angular, consult our dedicated [src/content/docs/angular/architecture/cross-app-communication.mdx](src/content/docs/angular/architecture/cross-app-communication.mdx) handbook.
+
+---
+
+*This guide was generated in Spanish with English codebases for the Frontend Guild of Verisure. Ensure all changes to Webpack configs are peer-reviewed before being merged.*
