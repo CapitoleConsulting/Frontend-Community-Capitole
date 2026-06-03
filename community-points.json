@@ -1,8 +1,8 @@
 {
   "users": {
     "Isaacgc1999": {
-      "points": 295,
-      "rank": "Contributor"
+      "points": 325,
+      "rank": "Advanced Contributor"
     },
     "nujovich": {
       "points": 160,
@@ -102,6 +102,19 @@
       ],
       "points": 15,
       "date": "2026-06-02T13:51:42.736Z"
+    },
+    {
+      "prNumber": "28",
+      "prTitle": "feat(leaderboard): enhance leaderboard generation and update document…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/28",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement",
+        "bonus:utility",
+        "bonus:community-used"
+      ],
+      "points": 30,
+      "date": "2026-06-02T14:17:27.584Z"
     }
   ]
 }
