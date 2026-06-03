@@ -66,8 +66,6 @@ bootstrapApplication(AppComponent, appConfig)
 
 2. Rewrite your main entry point [src/main.ts](src/main.ts) to utilize a dynamic import:
 ```typescript
-// The dynamic import acts as an asynchronous boundary.
-// This gives Webpack the gap it needs to negotiate shared singletons.
 import('./bootstrap').catch((err) => console.error(err));
 ```
 
@@ -86,7 +84,6 @@ Configure explicit sharing policies inside [webpack.config.js](webpack.config.js
 const { shareAll, withModuleFederationPlugin } = require('@angular-architects/module-federation/webpack');
 
 module.exports = withModuleFederationPlugin({
-  // Libraries can be shared explicitly to maintain singletons
   shared: {
     '@angular/core': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
     '@angular/common': { singleton: true, strictVersion: true, requiredVersion: 'auto' },
@@ -116,7 +113,6 @@ Configure the web server hosting the remote files (e.g., Nginx, Apache, or local
 
 For local development using [proxy.conf.js](proxy.conf.js) or Webpack dev server config:
 ```javascript
-// Add these headers to your devServer block or local mock servers
 devServer: {
   headers: {
     "Access-Control-Allow-Origin": "*",
@@ -153,13 +149,14 @@ export const routes: Route[] = [
       .then((m) => m.FeatureComponent)
       .catch((err) => {
         console.error('Failed to load Microfrontend resources dynamically:', err);
-        // Fallback to a user-friendly error component rather than crashing the route
         return import('@shared/components/mfe-error.component')
           .then((m) => m.MfeErrorComponent);
       })
   }
 ];
 ```
+
+> **Critical Bootstrapping Note**: When utilizing `type: 'manifest'`, you must guarantee that [src/main.ts](src/main.ts) has fully completed loading and initializing the federation manifests before the router attempts to load this path. If dynamic component resolution is triggered before the manifest data is populated in memory, it will trigger a critical runtime error.
 
 ---
 
@@ -178,12 +175,12 @@ Common developers trap:
 this.iconPath = 'assets/icons/info.svg'; // Will resolve on Host's domain!
 
 // Use this pattern instead:
-import { Inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { REMOTE_BASE_URL } from './tokens';
 
 @Injectable()
 export class AssetService {
-  constructor(@Inject(REMOTE_BASE_URL) private baseUrl: string) {}
+  private baseUrl = inject(REMOTE_BASE_URL);
 
   getAssetUrl(path: string): string {
     return `${this.baseUrl}/${path}`;
@@ -201,9 +198,26 @@ Angular's classic change detection relies on `zone.js`. In a Module Federation c
 Ensure `zone.js` is loaded exactly **once** in the host container's entry points.
 
 1. Ensure `zone.js` is declared in the Host's [src/index.html](src/index.html) or [src/main.ts](src/main.ts) under scripts/polyfills.
-2. In the remote MFEs, exclude `zone.js` from being processed or loaded. Within modern Angular 18/19 implementations, you should prefer migrating your remote applications to OnPush change detection and eventually a zoneless change detection loop.
+2. In the remote MFEs, exclude `zone.js` from being processed or loaded. Within modern applications, you should prefer migrating your remote applications to OnPush change detection and eventually a zoneless change detection loop.
 
-To opt out of Zone.js entirely at the bootstrap level of a remote when running under the host shell, configure zoneless inside the application providers:
+To opt out of Zone.js entirely at the bootstrap level of a remote when running under the host shell, configure zoneless based on your Angular framework version:
+
+##### A. Angular 19+ (Stable Zoneless)
+In Angular 19 and superior versions, zoneless is stable. Use the standard provider:
+
+```typescript
+import { provideZonelessChangeDetection } from '@angular/core';
+
+export const appConfig = {
+  providers: [
+    provideZonelessChangeDetection(),
+    // other providers...
+  ]
+};
+```
+
+##### B. Angular 18 (Experimental Zoneless)
+In Angular 18, zoneless is available under an experimental flag:
 
 ```typescript
 import { provideExperimentalZonelessChangeDetection } from '@angular/core';
@@ -214,6 +228,20 @@ export const appConfig = {
     // other providers...
   ]
 };
+```
+
+##### C. Angular 17 and Below (Previous Versions)
+For legacy applications where modern providers are not available, you must disable Zone.js in the bootstrap configuration options of your remote's [src/main.ts](src/main.ts) by passing `'noop'` to `ngZone`:
+
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(AppComponent, {
+  ...appConfig,
+  ngZone: 'noop' // Completely disables Zone.js execution for this remote
+}).catch((err) => console.error(err));
 ```
 
 ---

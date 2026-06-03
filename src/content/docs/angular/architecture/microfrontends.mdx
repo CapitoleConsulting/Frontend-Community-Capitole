@@ -108,23 +108,13 @@ const {
 } = require('@angular-architects/module-federation/webpack');
 
 const remoteMfConfig = module.exports = withModuleFederationPlugin({
-  // Unique name for the remote microfrontend
   name: 'remoteFeatureFront',
 
-  // Expose lazy-loaded feature modules dynamically
   exposes: {
     './Module': './src/app/feature-entry/feature-entry.module.ts',
   },
 
-  /**
-   * Shared dependencies configuration - MUST MATCH THE HOST for seamless runtime execution.
-   *
-   * - singleton: true -> Guarantees a single instance in memory to avoid injection token conflicts.
-   * - strictVersion: false -> Allows flexible patch version matching to ease minor updates.
-   * - requiredVersion: 'auto' / range -> Automatically retrieves package version range from package.json.
-   */
   shared: {
-    // Angular Core packages (critical - must be shared as singletons)
     "@angular/core": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
     "@angular/common": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
     "@angular/platform-browser": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
@@ -133,28 +123,18 @@ const remoteMfConfig = module.exports = withModuleFederationPlugin({
     "@angular/forms": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
     "@angular/common/http": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
 
-    // RxJS (reactive operations and token sharing)
     "rxjs": { singleton: true, strictVersion: false, requiredVersion: '^7.5.0' },
 
-    // Central Security & Authentication Libraries
     "@azure/msal-browser": { singleton: true, strictVersion: false, requiredVersion: false },
     "@azure/msal-angular": { singleton: true, strictVersion: false, requiredVersion: false },
 
-    // Common Translation/i18n library
     "@ngx-translate/core": { singleton: true, strictVersion: false, requiredVersion: false },
     "@ngx-translate/http-loader": { singleton: true, strictVersion: false, requiredVersion: false },
 
-    /**
-     * Shared Component/Design System Exception:
-     * We explicitly do NOT share the shared UI component library as a singleton with the host.
-     * This decouples the microfrontends, allowing remotes to bundle and ship their own component library 
-     * versions independently, avoiding complex shell redeployments during visual updates.
-     */
     "shared-design-system-lib": { singleton: false, strictVersion: false, requiredVersion: false },
   },
 },
 {
-  // CORS configuration to enable real-time local multirepo orchestration
   devServer: {
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -191,7 +171,6 @@ We divide this process into two files:
 
 `main.ts` (Dynamic asynchronous loader):
 ```typescript
-// Delegate execution so Webpack can satisfy Module Federation shared contracts first page payload
 import('./bootstrap').catch(err => console.error(err));
 ```
 
@@ -251,7 +230,6 @@ export class RouteBuilderService {
       data: { roles: dynRoute.roles }
     };
 
-    // Seamless application of Host-level Guards
     if (dynRoute.requiresAuth) {
       route.canActivate?.push(BaseAuthGuard);
     }
@@ -259,7 +237,6 @@ export class RouteBuilderService {
       route.canActivate?.push(GenericRoleGuard);
     }
 
-    // Lazy load on demand via Webpack Module Federation
     if (dynRoute.type === 'micro-frontend') {
       route.loadChildren = () => 
         loadRemoteModule({
@@ -321,13 +298,13 @@ When a remote MFE needs to perform custom error handling (e.g., rendering inline
 *  **Solution**: Attach the custom heading `X-Skip-Error-Modal` to your HTTP requests:
 ```typescript
 import { HttpHeaders, HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class FeatureDetailsRepository {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   fetchDetailsSilently(id: string) {
-    // Inject the unified bypass header
     const headers = new HttpHeaders().set('X-Skip-Error-Modal', 'true');
 
     return this.http.get(`/v1/features/${id}`, { headers });

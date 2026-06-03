@@ -68,20 +68,21 @@ export class ResourcePublisherService {
 
 ##### Listening inside the Host Container or listening Remote:
 ```typescript
-import { Component, HostListener } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-shell-header',
   template: `
     <div class="badge">Resources Selected: {{ count }}</div>
   `,
-  standalone: true
+  standalone: true,
+  host: {
+    '(window:app:resource-selected)': 'onResourceSelected($event)'
+  }
 })
 export class HostHeaderComponent {
   count = 0;
 
-  // Utilize Angular HostListener to safely intercept global browser events
-  @HostListener('window:app:resource-selected', ['$event'])
   onResourceSelected(event: CustomEvent): void {
     if (event.detail && event.detail.resourceId) {
       console.log('Received resource ID:', event.detail.resourceId);
@@ -119,12 +120,10 @@ export interface AppEvent<T = any> {
 export class EventBusService {
   private eventSubject = new Subject<AppEvent>();
 
-  // Publish event to the pipeline
   publish<T>(type: string, payload: T): void {
     this.eventSubject.next({ type, payload });
   }
 
-  // Subscribe to a specific event type eagerly
   on<T>(eventType: string): Observable<T> {
     return this.eventSubject.asObservable().pipe(
       filter((event) => event.type === eventType),
@@ -136,7 +135,7 @@ export class EventBusService {
 
 ##### Publishing an action from a remote Component:
 ```typescript
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { EventBusService } from '@shared/services/event-bus.service';
 
 @Component({
@@ -145,7 +144,7 @@ import { EventBusService } from '@shared/services/event-bus.service';
   standalone: true
 })
 export class CatalogCardComponent {
-  constructor(private eventBus: EventBusService) {}
+  private eventBus = inject(EventBusService);
 
   select(): void {
     this.eventBus.publish('catalog:resource:add', { id: 'api-102', type: 'REST' });
@@ -155,34 +154,31 @@ export class CatalogCardComponent {
 
 ##### Subscribing securely in a consumer Remote/Host (with safe RxJS cleanup):
 ```typescript
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EventBusService } from '@shared/services/event-bus.service';
 
 @Component({
   selector: 'app-notification-hub',
-  template: `<ul><li *ngFor="let item of log">{{ item }}</li></ul>`,
-  standalone: true,
-  imports: [NgFor]
+  template: `
+    <ul>
+      @for (item of log; track $index) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  `,
+  standalone: true
 })
-export class NotificationHubComponent implements OnInit, OnDestroy {
+export class NotificationHubComponent {
   log: string[] = [];
-  private destroy$ = new Subject<void>();
+  private eventBus = inject(EventBusService);
 
-  constructor(private eventBus: EventBusService) {}
-
-  ngOnInit(): void {
+  constructor() {
     this.eventBus.on<{ id: string }>('catalog:resource:add')
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed())
       .subscribe((resource) => {
         this.log.push(`Resource ${resource.id} added dynamically!`);
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }
 ```
@@ -203,7 +199,6 @@ All microfrontends and the App Shell connect to a unified state library. This ca
 2.  **Shared State Engines**: (such as Akita, Zustand, or a unified Redux/NgRx store).
 
 ```typescript
-// Shared package / Library containing state singleton
 import { signal, computed, Injectable } from '@angular/core';
 
 export interface UserProfile {
@@ -213,7 +208,6 @@ export interface UserProfile {
 
 @Injectable({ providedIn: 'root' })
 export class SharedUserProfileStore {
-  // Signals maintain a highly responsive, reactive, and localized store
   private profileState = signal<UserProfile | null>(null);
 
   profile = computed(() => this.profileState());
@@ -249,7 +243,7 @@ Use standard Routing patterns and the `ActivatedRoute` to query options.
 
 ##### Updating parameters via standard links or router instructions:
 ```typescript
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -258,7 +252,7 @@ import { Router } from '@angular/router';
   standalone: true
 })
 export class CatalogListComponent {
-  constructor(private router: Router) {}
+  private router = inject(Router);
 
   viewDetail(): void {
     this.router.navigate(['/features/deployments'], {
@@ -271,32 +265,31 @@ export class CatalogListComponent {
 
 ##### Querying options inside the destination Remote:
 ```typescript
-import { Component, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Observable } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-deployment-board',
   template: `
-    <div *ngIf="resourceId$ | async as id">
-      Loading configurations for resource: {{ id }}
-    </div>
+    @if (resourceId()) {
+      <div>
+        Loading configurations for resource: {{ resourceId() }}
+      </div>
+    }
   `,
-  standalone: true,
-  imports: [AsyncPipe, NgIf]
+  standalone: true
 })
-export class DeploymentBoardComponent implements OnInit {
-  resourceId$!: Observable<string | null>;
+export class DeploymentBoardComponent {
+  private route = inject(ActivatedRoute);
 
-  constructor(private route: ActivatedRoute) {}
-
-  ngOnInit(): void {
-    this.resourceId$ = this.route.queryParamMap.pipe(
+  resourceId = toSignal(
+    this.route.queryParamMap.pipe(
       map((params) => params.get('resourceId'))
-    );
-  }
+    ),
+    { initialValue: null }
+  );
 }
 ```
 
