@@ -59,19 +59,29 @@ function replaceBlock(filePath, content) {
     return;
   }
 
-  const start = "<!-- LEADERBOARD:START -->";
-  const end = "<!-- LEADERBOARD:END -->";
-
   const fileContent = fs.readFileSync(filePath, "utf8");
+
+  const isMdx = filePath.endsWith(".mdx");
+
+  const start = isMdx
+    ? "{/* LEADERBOARD:START */}"
+    : "<!-- LEADERBOARD:START -->";
+
+  const end = isMdx
+    ? "{/* LEADERBOARD:END */}"
+    : "<!-- LEADERBOARD:END -->";
 
   if (!fileContent.includes(start) || !fileContent.includes(end)) {
     console.log(`Leaderboard markers not found in ${filePath}. Skipping.`);
     return;
   }
 
+  const escapedStart = start.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedEnd = end.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
   const updatedContent = fileContent.replace(
-    new RegExp(`${start}[\\s\\S]*?${end}`),
-    `${start}\n${content}\n${end}`
+    new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}`),
+    `${start}\n\n${content}\n\n${end}`
   );
 
   fs.writeFileSync(filePath, updatedContent);
