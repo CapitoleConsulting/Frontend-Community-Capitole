@@ -5,6 +5,7 @@ const LEADERBOARD_FILE = "leaderboard.md";
 const README_FILE = "README.md";
 const HOME_FILE = "src/content/docs/index.mdx";
 
+const githubToken = process.env.GITHUB_TOKEN;
 const prAuthor = process.env.PR_AUTHOR;
 const prNumber = process.env.PR_NUMBER;
 const prTitle = process.env.PR_TITLE;
@@ -38,11 +39,25 @@ function getRank(points) {
   return "Rookie";
 }
 
+async function fetchGitHubName(username) {
+  try {
+    const headers = { "User-Agent": "Frontend-Community-Points-Bot" };
+    if (githubToken) headers["Authorization"] = `Bearer ${githubToken}`;
+    const response = await fetch(`https://api.github.com/users/${username}`, { headers });
+    if (!response.ok) return null;
+    const userData = await response.json();
+    return userData.name || null;
+  } catch {
+    return null;
+  }
+}
+
 function generateLeaderboardMarkdown(data) {
   const rows = Object.entries(data.users)
     .sort((a, b) => b[1].points - a[1].points)
     .map(([user, info], index) => {
-      return `| ${index + 1} | @${user} | ${info.points} | ${info.rank} |`;
+      const displayName = info.name || user;
+      return `| ${index + 1} | ${displayName} | ${info.points} | ${info.rank} |`;
     })
     .join("\n");
 
@@ -87,6 +102,8 @@ function replaceBlock(filePath, content) {
   fs.writeFileSync(filePath, updatedContent);
 }
 
+(async () => {
+
 let basePoints = 0;
 
 for (const label of labels) {
@@ -113,6 +130,14 @@ if (!data.users[prAuthor]) {
     points: 0,
     rank: "Rookie",
   };
+}
+
+// Backfill names for existing users that don't have one yet
+for (const [username, userInfo] of Object.entries(data.users)) {
+  if (!userInfo.name) {
+    const name = await fetchGitHubName(username);
+    if (name) userInfo.name = name;
+  }
 }
 
 const alreadyAwarded = data.history.some((entry) => entry.prNumber === prNumber);
@@ -150,3 +175,5 @@ replaceBlock(README_FILE, leaderboardMarkdown);
 replaceBlock(HOME_FILE, leaderboardMarkdown);
 
 console.log(`Awarded ${basePoints} points to ${prAuthor}`);
+
+})();

@@ -1,10 +1,12 @@
 {
   "users": {
     "Isaacgc1999": {
+      "name": "Isaac García",
       "points": 355,
       "rank": "Advanced Contributor"
     },
     "nujovich": {
+      "name": "Nadia Ujovich",
       "points": 160,
       "rank": "Contributor"
     },
@@ -13,7 +15,93 @@
       "rank": "Rookie"
     },
     "hndcore": {
+      "name": "hndcore.io",
       "points": 25,
+      "rank": "Rookie"
+    },
+    "luismiguel-garcia": {
+      "name": "Luis Miguel García Palomares",
+      "points": 20,
+      "rank": "Rookie"
+    },
+    "alexis-valdez": {
+      "name": "Alexis Valdez",
+      "points": 20,
+      "rank": "Rookie"
+    },
+    "juanangel-garcia": {
+      "name": "Juan Angel García Jimenez",
+      "points": 15,
+      "rank": "Rookie"
+    },
+    "josevicente-lucas": {
+      "name": "Jose Vicente Lucas Poveda",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "hugo-barcelo": {
+      "name": "Hugo Barceló Díez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "francisco-padron": {
+      "name": "Francisco Javier Padrón",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "victor-navarro": {
+      "name": "Víctor Jose Navarro Rodríguez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "juanfrancisco-martin": {
+      "name": "Juan Francisco Martin Marcos",
+      "points": 15,
+      "rank": "Rookie"
+    },
+    "roger-porta": {
+      "name": "Roger Porta",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "david-portilla": {
+      "name": "David Portilla Saldaña",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "hugo-moragues": {
+      "name": "Hugo Moragues Valencia",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "manuel-lopez": {
+      "name": "Manuel Lopez Camarena",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "marco-aguilera": {
+      "name": "Marco Aguilera",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "ernesto-rickert": {
+      "name": "Ernesto Nicolas Rickert",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "bryan-condor": {
+      "name": "Bryan Kevin Condor",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "victor-alvarez": {
+      "name": "Víctor Álvarez Martínez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "simon-hernandez": {
+      "name": "Simon Pedro Hernandez Leal",
+      "points": 15,
       "rank": "Rookie"
     }
   },
