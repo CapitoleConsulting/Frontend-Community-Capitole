@@ -2,7 +2,7 @@
   "users": {
     "Isaacgc1999": {
       "name": "Isaac García",
-      "points": 355,
+      "points": 365,
       "rank": "Advanced Contributor"
     },
     "nujovich": {
@@ -216,6 +216,17 @@
       ],
       "points": 30,
       "date": "2026-06-03T07:12:45.751Z"
+    },
+    {
+      "prNumber": "33",
+      "prTitle": "feat(points): enhance leaderboard with user names and update fetching…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/33",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement"
+      ],
+      "points": 10,
+      "date": "2026-06-04T16:53:56.439Z"
     }
   ]
 }
