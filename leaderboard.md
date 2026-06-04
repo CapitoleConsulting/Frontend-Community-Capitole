@@ -2,7 +2,7 @@
 
 | Position | User | Points | Rank |
 |---:|---|---:|---|
-| 1 | Isaac García | 355 | Advanced Contributor |
+| 1 | Isaac García | 365 | Advanced Contributor |
 | 2 | Nadia Ujovich | 160 | Contributor |
 | 3 | angellogar | 65 | Rookie |
 | 4 | hndcore.io | 35 | Rookie |
@@ -22,4 +22,4 @@
 | 18 | Ernesto Nicolas Rickert | 5 | Rookie |
 | 19 | Bryan Kevin Condor | 5 | Rookie |
 
-_Last updated: 2026-06-03T07:12:45.752Z_
+_Last updated: 2026-06-04T16:53:56.439Z_
