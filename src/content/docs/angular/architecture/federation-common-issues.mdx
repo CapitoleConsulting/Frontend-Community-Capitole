@@ -156,25 +156,47 @@ export const routes: Route[] = [
 ];
 ```
 
-> **Critical Bootstrapping Note**: When utilizing `type: 'manifest'`, you must guarantee that [src/main.ts](src/main.ts) has fully completed loading and initializing the federation manifests before the router attempts to load this path. If dynamic component resolution is triggered before the manifest data is populated in memory, it will trigger a critical runtime error.
+:::danger[Critical Bootstrapping Note]
+When utilizing `type: 'manifest'`, you must guarantee that [src/main.ts](src/main.ts) has fully completed loading and initializing the federation manifests before the router attempts to load this path. If dynamic component resolution is triggered before the manifest data is populated in memory, it will trigger a critical runtime error.
+:::
 
 ---
 
-### Issue 5: Local Mocking Limitations
+### Issue 5: Local Mocking, Proxying, and Isolation Constraints
 
-When developing a remote MFE locally, you might want to run it in isolation (standing up a local dev server) or test its integration directly within a locally running Host container on standard mock ports.
+When developing microfrontends locally, teams face restrictions related to localized cross-origin requests, environment boundaries, mock servers, and global browser-error interception.
 
-#### The Protocol for ams-mocks
-Our standard mocks directory [ams-mocks/mocks](ams-mocks/mocks) or service [ams-mocks/index.js](ams-mocks/index.js) must be running on port `1080` or the designated API proxy port to prevent route resolutions from hitting dead environments.
+#### A. Development Proxy Environments
+During local development, a proxy configuration block [proxy.conf.js](proxy.conf.js) is required to route browser requests safely, bypassing operating systems' cross-origin limitations.
 
-Common developers trap:
-*   Developing features in a remote MFE, assuming global relative assets.
-*   *Correction*: Always construct asset URLs dynamically using the remote's actual base URL or ensure assets are routed relatively via proxy mappings. For example:
+To start the application pointing to localized mock ports:
+```bash
+# Starts the remote development server against local mocks in ams-front:
+npm run start:local:mocks
+
+# Runs the mock server and the application dev server together:
+npm run start:local:mocks:full
+```
+
+Our proxy leverages `cross-env` to set environmental variables uniformly across macOS, Linux, and Windows to map endpoints safely:
+```javascript
+// Example targets inside proxy.conf.js
+const targets = {
+  'local-mocks': 'http://localhost:1080',
+  'dev': 'https://ed1bssaio01v.vsdepi.local:8243'
+};
+```
+
+#### B. Mock API Repositories with Mockoon
+We maintain a mock API directory [test/mocks/ams.json](test/mocks/ams.json). To secure smooth operations:
+1. Always start the mock server under port `1080` (or the specific port mapped by your target remote/host):
+   ```bash
+   npm run mocks # Starts @mockoon/cli mock server in localhost:1080
+   ```
+2. Restrict route assets to relative pathways within components, or resolve them using the remote's dynamic base URL. Avoid absolute routes (e.g. `/assets/icon.svg`) because the browser will attempt to load the asset from the Host's domain name, resulting in 404 errors.
+
 ```typescript
-// Avoid doing this:
-this.iconPath = 'assets/icons/info.svg'; // Will resolve on Host's domain!
 
-// Use this pattern instead:
 import { inject, Injectable } from '@angular/core';
 import { REMOTE_BASE_URL } from './tokens';
 
@@ -187,6 +209,34 @@ export class AssetService {
   }
 }
 ```
+
+#### C. Bypassing Host Error Overlays
+If your remote MFE runs embedded within a larger Host Shell, the shell's global interceptors (like `ErrorHandlerInterceptor`) will capture HTTP failures and display generic global error modals.
+
+To bypass this behavior and allow your remote MFE's facade to display context-specific error messages:
+*   Insert the custom bypass header `X-Skip-Error-Modal` during request creation:
+
+```typescript
+import { HttpHeaders, HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class ResourceDetailsRepository {
+  constructor(private http: HttpClient) {}
+
+  fetchDetailsSilently(id: string) {
+    const headers = new HttpHeaders().set('X-Skip-Error-Modal', 'true');
+    return this.http.get(`/v1/resources/${id}`, { headers });
+  }
+}
+```
+
+#### D. Isolated Visual Playgrounds
+Rather than spinning up the entire Host Shell to test components under development, use an isolated playground. The custom routing file `ams.routes.ts` configures a visual playground route (`/playground`) available solely in development environments.
+
+1. Navigate to `src/app/@core/components/playground/playground.component.ts` (this directory is ignored in Git to allow manual additions).
+2. Render your remote components inside `playground.component.html` in isolation.
+3. Access of your component at `http://localhost:4201/playground` with zero host container dependencies.
 
 ---
 
@@ -210,8 +260,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 
 export const appConfig = {
   providers: [
-    provideZonelessChangeDetection(),
-    // other providers...
+    provideZonelessChangeDetection()
   ]
 };
 ```
@@ -225,7 +274,6 @@ import { provideExperimentalZonelessChangeDetection } from '@angular/core';
 export const appConfig = {
   providers: [
     provideExperimentalZonelessChangeDetection(),
-    // other providers...
   ]
 };
 ```
@@ -240,7 +288,7 @@ import { appConfig } from './app/app.config';
 
 bootstrapApplication(AppComponent, {
   ...appConfig,
-  ngZone: 'noop' // Completely disables Zone.js execution for this remote
+  ngZone: 'noop'
 }).catch((err) => console.error(err));
 ```
 
@@ -251,10 +299,11 @@ bootstrapApplication(AppComponent, {
 To deepen your understanding, consult these expert articles and community-validated resources:
 
 *   **Vasanthan K - Cross-App Communication in Micro Frontends**: Detailed guide on establishing secure event buses, custom browser listeners, and shared global states. [Cross-App Communication Pattern guide](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
-*   **Srijan Singh - Mastering Module Federation Part 1**: Explains team constraints, bottlenecks of monolithic structures, and deployment autonomy trade-offs. [Mastering Module Federation](https://medium.com/@srijans7/mastering-module-federation-part-1)
-*   **Manfred Steyer - Module Federation in Angular**: Comprehensive implementation techniques, dynamically-registered manifests, and compilation-agnostic import maps. [Angular Architects Blog](https://www.angular-architects.io/blog/)
+*   **Srijan Singh - Mastering Module Federation Part 1**: Explains team constraints, bottlenecks of monolithic structures, and deployment autonomy trade-offs. [Mastering Module Federation](https://iamsrijan.medium.com/part-1-why-module-federation-solves-real-problems-and-when-it-doesnt-a6155da2e41e)
+*   **Manfred Steyer - Module Federation in Angular**: Comprehensive implementation techniques, dynamically-registered manifests, and compilation-agnostic import maps. [Angular Architects Blog](https://www.angulararchitects.io/en/)
 *   **Egor Malyshev - Microfrontends Architecture Guide**: A complete study of client-side runtime dependency orchestration, security layers, and shared state across distributed UI packages.
-*   **Shared Communication Playbook**: For a deep exploration of designing strongly-typed Event Buses and shared Signal States inside Angular, consult our dedicated [src/content/docs/angular/architecture/cross-app-communication.mdx](src/content/docs/angular/architecture/cross-app-communication.mdx) handbook.
+*   **Corporate Application Management Suite (ams-front README)**: Internal guidelines on setting up Mockoon loaders, dynamic target proxying, isolated playgounds, and the `X-Skip-Error-Modal` header.
+*   **Corporate Portal Container Shell (cosmos-front README)**: System details on setting up MSAL authentication, role interceptors, custom `RouteReusableStrategy`, and shared design layout variables.
 
 ---
 

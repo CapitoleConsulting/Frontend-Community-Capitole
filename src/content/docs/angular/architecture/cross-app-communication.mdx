@@ -257,7 +257,7 @@ export class CatalogListComponent {
   viewDetail(): void {
     this.router.navigate(['/features/deployments'], {
       queryParams: { resourceId: 'api-gateway-12a', env: 'production' },
-      queryParamsHandling: 'merge' // Preserve other parameters safely
+      queryParamsHandling: 'merge'
     });
   }
 }
@@ -345,8 +345,8 @@ To keep your distributed environment clean, robust, and deployable, enforce thes
 To explore deeper implementation patterns and real-world microfrontend architectures, study these resources:
 
 *   **Vasanthan K - Cross-App Communication in Micro Frontends**: Detailed examination of decoupled communication flows and browser structures. [Cross-App Communication Pattern guide](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
-*   **Srijan Singh - Mastering Module Federation Part 1**: Insightful guidelines on when federation saves monolithic lifecycles and how to scale independent deployments. [Mastering Module Federation Series](https://medium.com/@srijans7/mastering-module-federation-part-1)
-*   **Manfred Steyer - Angular Architects Handbook**: Core principles on managing dynamic import maps, sharing state singletons, and configuring webpack bindings. [Angular Architects Blog documentation](https://www.angular-architects.io/blog/)
+*   **Srijan Singh - Mastering Module Federation Part 1**: Insightful guidelines on when federation saves monolithic lifecycles and how to scale independent deployments. [Mastering Module Federation Series](https://iamsrijan.medium.com/part-1-why-module-federation-solves-real-problems-and-when-it-doesnt-a6155da2e41e)
+*   **Manfred Steyer - Angular Architects Handbook**: Core principles on managing dynamic import maps, sharing state singletons, and configuring webpack bindings. [Angular Architects Blog documentation](https://www.angulararchitects.io/en/)
 
 ---
 
