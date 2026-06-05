@@ -13,21 +13,75 @@ const prUrl = process.env.PR_URL;
 const labels = JSON.parse(process.env.PR_LABELS || "[]").map((l) => l.name);
 
 const pointsMap = {
+  // 📚 Documentación
   "points:doc-small": 10,
   "points:doc-onboarding": 40,
   "points:doc-architecture": 70,
   "points:doc-reference": 120,
 
+  // ✍️ Artículos técnicos
+  "points:article-short": 40,
+  "points:article-medium": 70,
+  "points:article-deep": 120,
+
+  // 🧩 Contribuciones al repositorio (PR)
   "points:fix-doc": 5,
   "points:small-improvement": 10,
   "points:guide-pattern": 25,
   "points:technical-example": 35,
   "points:refactor-major": 50,
-  "points:tooling": 100,
+  "points:tooling-minor": 80,
+  "points:tooling-major": 120,
 
+  // 🎤 Charlas y workshops
+  "points:talk-lightning": 80,
+  "points:talk-standard": 150,
+  "points:workshop-technical": 220,
+  "points:workshop-full": 300,
+
+  // 🤝 Ayuda a juniors / mentoría
+  "points:help-quick": 10,
+  "points:help-session": 25,
+  "points:help-mentoring": 40,
+  "points:help-recurring": 60,
+  "points:help-critical": 80,
+
+  // 👥 Participación en eventos
+  "points:event-attendance": 5,
+  "points:event-participation": 10,
+  "points:event-questions": 15,
+  "points:event-feedback": 20,
+
+  // 🧪 PoCs y experimentos
+  "points:poc-idea": 15,
+  "points:poc-functional": 50,
+  "points:poc-advanced": 90,
+  "points:poc-adopted": 150,
+
+  // 🏅 Bonus artículos
+  "bonus:article-code": 10,
+  "bonus:article-diagrams": 10,
+  "bonus:article-comparison": 15,
+  "bonus:community-valued": 20,
+
+  // 🏅 Bonus PRs
   "bonus:no-changes": 10,
   "bonus:multi-framework": 15,
   "bonus:community-used": 20,
+
+  // 🏅 Bonus charlas
+  "bonus:talk-live-demo": 20,
+  "bonus:talk-material": 20,
+  "bonus:talk-recorded": 25,
+  "bonus:talk-feedback": 30,
+
+  // 🏅 Bonus mentoría
+  "bonus:help-feedback": 15,
+  "bonus:help-consistent": 20,
+
+  // 🔥 Bonus consistencia (se aplican manualmente)
+  "bonus:streak-3weeks": 40,
+  "bonus:streak-2months": 100,
 };
 
 function getRank(points) {
@@ -116,51 +170,53 @@ if (labels.includes("penalty:low-effort")) {
   basePoints = Math.floor(basePoints * 0.5);
 }
 
-if (basePoints <= 0) {
-  console.log("No points labels found. Nothing to award.");
-  process.exit(0);
-}
-
 const data = fs.existsSync(POINTS_FILE)
   ? JSON.parse(fs.readFileSync(POINTS_FILE, "utf8"))
   : { users: {}, history: [] };
 
-if (!data.users[prAuthor]) {
-  data.users[prAuthor] = {
+const resolvedKey =
+  Object.keys(data.users).find(
+    (key) => data.users[key].githubUsername === prAuthor
+  ) || prAuthor;
+
+if (!data.users[resolvedKey]) {
+  data.users[resolvedKey] = {
     points: 0,
     rank: "Rookie",
   };
 }
 
-// Backfill names for existing users that don't have one yet
-for (const [username, userInfo] of Object.entries(data.users)) {
-  if (!userInfo.name) {
-    const name = await fetchGitHubName(username);
-    if (name) userInfo.name = name;
+for (const [key, userInfo] of Object.entries(data.users)) {
+  const githubUser = userInfo.githubUsername || key;
+  const name = await fetchGitHubName(githubUser);
+  if (name) userInfo.name = name;
+}
+
+if (basePoints <= 0) {
+  console.log("No points labels found. Regenerating leaderboard only.");
+} else {
+  const alreadyAwarded = data.history.some((entry) => entry.prNumber === prNumber);
+
+  if (alreadyAwarded) {
+    console.log(`PR #${prNumber} already awarded. Regenerating leaderboard only.`);
+  } else {
+    data.users[resolvedKey].points += basePoints;
+    data.users[resolvedKey].rank = getRank(data.users[resolvedKey].points);
+
+    data.history.push({
+      prNumber,
+      prTitle,
+      prUrl,
+      author: resolvedKey,
+      labels,
+      points: basePoints,
+      date: new Date().toISOString(),
+    });
+
+    fs.writeFileSync(POINTS_FILE, JSON.stringify(data, null, 2));
+    console.log(`Awarded ${basePoints} points to ${resolvedKey}`);
   }
 }
-
-const alreadyAwarded = data.history.some((entry) => entry.prNumber === prNumber);
-
-if (alreadyAwarded) {
-  console.log(`PR #${prNumber} already awarded. Skipping.`);
-  process.exit(0);
-}
-
-data.users[prAuthor].points += basePoints;
-data.users[prAuthor].rank = getRank(data.users[prAuthor].points);
-
-data.history.push({
-  prNumber,
-  prTitle,
-  prUrl,
-  author: prAuthor,
-  labels,
-  points: basePoints,
-  date: new Date().toISOString(),
-});
-
-fs.writeFileSync(POINTS_FILE, JSON.stringify(data, null, 2));
 
 const leaderboardMarkdown = generateLeaderboardMarkdown(data);
 
@@ -173,7 +229,5 @@ fs.writeFileSync(LEADERBOARD_FILE, fullLeaderboard);
 
 replaceBlock(README_FILE, leaderboardMarkdown);
 replaceBlock(HOME_FILE, leaderboardMarkdown);
-
-console.log(`Awarded ${basePoints} points to ${prAuthor}`);
 
 })();
