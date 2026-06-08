@@ -1,0 +1,353 @@
+---
+title: Cross-App Communication in Microfrontends
+description: Architectural handbook covering strategies, patterns, and implementation of communication between independent microfrontends in Angular setups.
+---
+
+# Cross-App Communication in Microfrontends: Architectural Guide
+
+In a microfrontend (MFE) architecture, application boundary separation is king. Each microfrontend operates independently inside its own context. However, to create a seamless monolithic-feeling user experience, these independent modules frequently need to collaborate and exchange messages.
+
+Establishing a solid, decoupled communication channel is one of the most critical aspects of frontend architecture. Choosing the wrong mechanism can lead to "distributed monoliths," while neglecting communication can leave remote applications functionally isolated.
+
+This guide explores the four primary communication strategies, Angular-specific implementation details, architectural trade-offs, and critical best practices.
+
+---
+
+## 1. The Core Architecture Challenge
+
+In traditional monolithic web applications, shared services, standard state managers (such as NgRx or Akita), and shared object trees are easily accessible across all views. In a microfrontend layout:
+
+*   Re-declaring, importing, or tightly coupling local services across remotes is a severe anti-pattern that breaks independent deployability.
+*   We must establish dynamic, runtime-driven protocols that allow microfrontends to write and read data without having any direct compiled dependency on each other.
+
+To illustrate this, consider a typical scenario: A user selects an item inside a Resource Catalog Remote, and the Navigation Shell Bar needs to instantly increment an active resource badge.
+
+```plaintext
+ +-------------------------------------------------------------------+
+ | App Shell (Host Container)                                        |
+ |   +-------------------------------------------------------------+ |
+ |   | Header Component & Resource Badge (Reads Event Bus / State) | |
+ |   +-------------------------------------------------------------+ |
+ |                                                                   |
+ |   +--------------------------+     +----------------------------+ |
+ |   | Resource Catalog Remote  | ===>| Asset Manager Remote       | |
+ |   |   (Dispatches message)   |     |   (Listens for changes)    | |
+ |   +--------------------------+     +----------------------------+ |
+ +-------------------------------------------------------------------+
+```
+
+---
+
+## 2. Four Common Communication Patterns
+
+We evaluate and implement the four leading strategies for cross-app communication.
+
+---
+
+### Strategy 1: Native Custom Browser Events
+
+This is the simplest and most framework-agnostic communication mechanism. It relies purely on the browser's native `CustomEvent` API dispatching messages globally across the document tree.
+
+#### Implementation in Angular
+Remotes dispatch events on the global `window` object, while the Host Container (or other remotes) listen globally.
+
+##### Dispatching from a Client Remote:
+```typescript
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class ResourcePublisherService {
+  publishSelection(resourceId: string): void {
+    const event = new CustomEvent('app:resource-selected', {
+      detail: { resourceId, timestamp: new Date() }
+    });
+    window.dispatchEvent(event);
+  }
+}
+```
+
+##### Listening inside the Host Container or listening Remote:
+```typescript
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-shell-header',
+  template: `
+    <div class="badge">Resources Selected: {{ count }}</div>
+  `,
+  standalone: true,
+  host: {
+    '(window:app:resource-selected)': 'onResourceSelected($event)'
+  }
+})
+export class HostHeaderComponent {
+  count = 0;
+
+  onResourceSelected(event: CustomEvent): void {
+    if (event.detail && event.detail.resourceId) {
+      console.log('Received resource ID:', event.detail.resourceId);
+      this.count++;
+    }
+  }
+}
+```
+
+#### Trade-offs
+*   **Pros**: Zero dependencies, extremely simple, natively supported by all browsers, completely decoupled across frameworks.
+*   **Cons**: No built-in Type safety, hard to trace or debug in large systems, events can conflict unless namespaces are strictly managed, demands global listeners (`window`) which can scale-out memory if left uncleaned.
+
+---
+
+### Strategy 2: Event Bus (Pub/Sub with RxJS)
+
+To scale, enterprise applications require structured, decoupled channels with clean subscription teardowns. This is achieved using the **Publish-Subscribe (Pub/Sub) pattern** over a lightweight shared Event Bus, leveraging RxJS Subjects.
+
+#### Implementation in Angular
+Create a shared, lightweight utility package (or a shared library in a monorepo setup) containing the Event Bus orchestrator.
+
+##### Defining the Event Bus Service:
+```typescript
+import { Injectable } from '@angular/core';
+import { Subject, Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
+export interface AppEvent<T = any> {
+  type: string;
+  payload: T;
+}
+
+@Injectable({ providedIn: 'root' })
+export class EventBusService {
+  private eventSubject = new Subject<AppEvent>();
+
+  publish<T>(type: string, payload: T): void {
+    this.eventSubject.next({ type, payload });
+  }
+
+  on<T>(eventType: string): Observable<T> {
+    return this.eventSubject.asObservable().pipe(
+      filter((event) => event.type === eventType),
+      map((event) => event.payload as T)
+    );
+  }
+}
+```
+
+##### Publishing an action from a remote Component:
+```typescript
+import { Component, inject } from '@angular/core';
+import { EventBusService } from '@shared/services/event-bus.service';
+
+@Component({
+  selector: 'app-catalog-card',
+  template: `<button (click)="select()">Select Resource</button>`,
+  standalone: true
+})
+export class CatalogCardComponent {
+  private eventBus = inject(EventBusService);
+
+  select(): void {
+    this.eventBus.publish('catalog:resource:add', { id: 'api-102', type: 'REST' });
+  }
+}
+```
+
+##### Subscribing securely in a consumer Remote/Host (with safe RxJS cleanup):
+```typescript
+import { Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EventBusService } from '@shared/services/event-bus.service';
+
+@Component({
+  selector: 'app-notification-hub',
+  template: `
+    <ul>
+      @for (item of log; track $index) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  `,
+  standalone: true
+})
+export class NotificationHubComponent {
+  log: string[] = [];
+  private eventBus = inject(EventBusService);
+
+  constructor() {
+    this.eventBus.on<{ id: string }>('catalog:resource:add')
+      .pipe(takeUntilDestroyed())
+      .subscribe((resource) => {
+        this.log.push(`Resource ${resource.id} added dynamically!`);
+      });
+  }
+}
+```
+
+#### Trade-offs
+*   **Pros**: High flexibility, clean asynchronous Streams, leverage powerful RxJS filtering (`filter`, `debounceTime`, `switchMap`), handles massive real-time pipelines gracefully.
+*   **Cons**: Requires a shared runtime singleton for the Event Bus. In Webpack Module Federation, the `EventBusService` or its host library must be registered as a singleton to prevent multiple independent RxJS subjects from isolating subscribers.
+
+---
+
+### Strategy 3: Shared State Store
+
+When microfrontends need to share highly complex or stateful resources (such as active user profiles, permissions matrices, or transactional checkout tables), individual events become difficult to stitch together. In these scenarios, a shared reactive store represents the best alternative.
+
+#### Implementation
+All microfrontends and the App Shell connect to a unified state library. This can be built using:
+1.  **Shared global services returning custom Signals**: (highly performant and native to Angular 18/19).
+2.  **Shared State Engines**: (such as Akita, Zustand, or a unified Redux/NgRx store).
+
+```typescript
+import { signal, computed, Injectable } from '@angular/core';
+
+export interface UserProfile {
+  username: string;
+  roles: string[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class SharedUserProfileStore {
+  private profileState = signal<UserProfile | null>(null);
+
+  profile = computed(() => this.profileState());
+  isAdmin = computed(() => !!this.profileState()?.roles.includes('ADMIN'));
+
+  setProfile(user: UserProfile): void {
+    this.profileState.set(user);
+  }
+
+  clear(): void {
+    this.profileState.set(null);
+  }
+}
+```
+
+#### Trade-offs
+*   **Pros**: Centralized, predictable data updates, highly reactive, and provides a single source of truth across the whole screen.
+*   **Cons**: Creates tighter coupling compared to simple event structures. Remotes must depend on the structure of the shared store, which can complicate independent deployments if schemas change too quickly.
+
+---
+
+### Strategy 4: URL and Routing State
+
+The web's most natural communication channel is the URL. State details can be serialized and passed inside route paths, hashes, or query parameters.
+
+Example format:
+```plaintext
+http://localhost:4200/features/deployments?resourceId=api-gateway-12a&env=production
+```
+
+#### Implementation in Angular
+Use standard Routing patterns and the `ActivatedRoute` to query options.
+
+##### Updating parameters via standard links or router instructions:
+```typescript
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-catalog-list',
+  template: `<button (click)="viewDetail()">View Deployments</button>`,
+  standalone: true
+})
+export class CatalogListComponent {
+  private router = inject(Router);
+
+  viewDetail(): void {
+    this.router.navigate(['/features/deployments'], {
+      queryParams: { resourceId: 'api-gateway-12a', env: 'production' },
+      queryParamsHandling: 'merge'
+    });
+  }
+}
+```
+
+##### Querying options inside the destination Remote:
+```typescript
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-deployment-board',
+  template: `
+    @if (resourceId()) {
+      <div>
+        Loading configurations for resource: {{ resourceId() }}
+      </div>
+    }
+  `,
+  standalone: true
+})
+export class DeploymentBoardComponent {
+  private route = inject(ActivatedRoute);
+
+  resourceId = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params) => params.get('resourceId'))
+    ),
+    { initialValue: null }
+  );
+}
+```
+
+#### Trade-offs
+*   **Pros**: Highly discoverable, natively compatible with browser back/forward buttons, allows direct deep-linking (users can bookmark and share the precise viewport view).
+*   **Cons**: Limited data sizes (only handles simple state strings), no real-time stream execution capability, and pollutes the address bar if used excessively for granular state signals.
+
+---
+
+## 3. Communication Strategy Decision Matrix
+
+| Metric / Dimension | Custom Browser Events | Event Bus (Pub/Sub) | Shared State Store | URL Routing State |
+| :--- | :--- | :--- | :--- | :--- |
+| **Coupling Level** | **Zero Coupling** | Very Low Coupling | Medium Coupling | Low Coupling |
+| **Framework Isolation** | Natively framework-agnostic | Agnostic (Requires sharing JavaScript files) | High (Often tied to framework libraries) | Agnostic |
+| **Ideal Data Type** | Simple trigger, notifications | Action events, messages with values | Heavy transaction data, global state | Filters, IDs, tabs state, router params |
+| **Type Safety** | Slower (Manual interfaces) | Strong (via Shared TypeScript contracts) | Strong (Full type contract protection) | Weak |
+| **Browser URL History** | None | None | None | **Excellent (Shareable native links)** |
+
+---
+
+## 4. Best Practices for Microfrontend Communication
+
+To keep your distributed environment clean, robust, and deployable, enforce these development rules:
+
+1.  **Prefer Event-Driven Communication**
+    Avoid direct service calls, global dependency sharing, or imports between different microfrontends (e.g. `CatalogRemote` importing a class or directory path directly from `CartRemote`). Use highly decoupled Publish/Subscribe channels instead.
+2.  **Define Structured, Typed Event Contracts**
+    Establish a central namespace enum folder representing available system action keys. Maintain consistent event schemas to ensure remotes agree on payload shapes.
+    ```typescript
+    export enum ApplicationEvent {
+      CatalogResourceSelected = 'app:catalog:resource-selected',
+      UserRolesRefreshed = 'app:user:roles-refreshed'
+    }
+    ```
+3.  **Ensure Teardown / Subscription Hygiene**
+    When subscribing to custom browser events or event bus pipelines, always unbind your listeners during component destruction (`ngOnDestroy`) using `removeEventListener` or RxJS `takeUntil` operators to prevent major client memory leaks.
+4.  **Enforce Singletons for Event Buses under Module Federation**
+    Within [webpack.config.js](webpack.config.js), register your shared event bus utility or library as a shared singleton:
+    ```javascript
+    module.exports = withModuleFederationPlugin({
+      shared: {
+        '@shared/services/event-bus': { singleton: true, strictVersion: true }
+      }
+    });
+    ```
+    This ensures all dynamic modules refer to the exact same event stream and subscriptions don't get lost.
+
+---
+
+## 5. Dedicating References
+
+To explore deeper implementation patterns and real-world microfrontend architectures, study these resources:
+
+*   **Vasanthan K - Cross-App Communication in Micro Frontends**: Detailed examination of decoupled communication flows and browser structures. [Cross-App Communication Pattern guide](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
+*   **Srijan Singh - Mastering Module Federation Part 1**: Insightful guidelines on when federation saves monolithic lifecycles and how to scale independent deployments. [Mastering Module Federation Series](https://iamsrijan.medium.com/part-1-why-module-federation-solves-real-problems-and-when-it-doesnt-a6155da2e41e)
+*   **Manfred Steyer - Angular Architects Handbook**: Core principles on managing dynamic import maps, sharing state singletons, and configuring webpack bindings. [Angular Architects Blog documentation](https://www.angulararchitects.io/en/)
+
+---
+
+*This guide belongs to our architectural standards handbook. Seek peer review from the Frontend Guild before deploying shared singleton states to production.*

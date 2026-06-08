@@ -11,8 +11,8 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 65,
-      "rank": "Rookie",
+      "points": 125,
+      "rank": "Contributor",
       "name": "Juan Angel Garcia Jimenez"
     },
     "hndcore": {
@@ -229,17 +229,18 @@
       "date": "2026-06-04T16:53:56.439Z"
     },
     {
-      "prNumber": "36",
-      "prTitle": "feat(points): add GitHub usernames and names for new contributors in …",
-      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/36",
-      "author": "Isaacgc1999",
+      "prNumber": "32",
+      "prTitle": "docs(angular): add comprehensive microfrontends and module federation…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/32",
+      "author": "angellogar",
       "labels": [
-        "points:small-improvement",
-        "bonus:community-used",
-        "bonus:streak-3weeks"
+        "points:guide-pattern",
+        "points:technical-example",
+        "points:tooling",
+        "bonus:utility"
       ],
-      "points": 70,
-      "date": "2026-06-08T07:46:55.741Z"
+      "points": 60,
+      "date": "2026-06-08T08:12:08.920Z"
     }
   ]
 }
