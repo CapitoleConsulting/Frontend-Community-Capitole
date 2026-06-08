@@ -1,0 +1,191 @@
+---
+title: Common Issues to Avoid
+description: Essential pitfalls to watch out for when creating Angular projects from scratch.
+sidebar.order: 9
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+When starting an Angular project, certain mistakes are common and can compound into significant problems as your application grows. This guide highlights critical issues to avoid from day one.
+
+---
+
+## Memory Leaks from Unsubscribed Observables
+
+One of the most frequent issues in Angular applications is memory leaks caused by failing to unsubscribe from observables. When a component subscribes to an observable (e.g., from HttpClient or an event source) but doesn't unsubscribe upon destruction, the subscription persists, leading to memory leaks and potential unexpected behavior.
+
+<Aside type="danger">
+  Unsubscribed observables continue to hold references in memory, causing performance degradation and unexpected behavior over time.
+</Aside>
+
+**To prevent this:**
+
+- Implement the `OnDestroy` lifecycle hook and clean up subscriptions
+- Use `takeUntil`, async pipe, or `Subscription.unsubscribe()`
+
+```typescript
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-my-component',
+  template: `<p>Counter: {{ count }}</p>`
+})
+export class MyComponent implements OnInit, OnDestroy {
+  count = 0;
+  private destroy$ = new Subject<void>();
+
+  ngOnInit() {
+    interval(1000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(val => this.count = val);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+---
+
+## Improper Use of Two-Way Binding
+
+Overusing `[(ngModel)]` for two-way data binding, especially in large forms, can lead to performance issues and tangled logic. It blurs the line between data flow and makes debugging difficult.
+
+<Aside type="caution">
+  Two-way binding in large forms obscures data flow and makes testing and debugging harder.
+</Aside>
+
+**Best practice:**
+
+- Prefer Reactive Forms for complex forms
+- Use one-way binding (`[value]`, `(input)`) when full two-way binding isn't necessary
+
+```typescript
+import { FormBuilder, FormGroup } from '@angular/forms';
+
+export class MyFormComponent {
+  profileForm: FormGroup;
+
+  constructor(private fb: FormBuilder) {
+    this.profileForm = this.fb.group({
+      name: [''],
+      email: ['']
+    });
+  }
+}
+```
+
+---
+
+## Inadequate Error Handling
+
+Neglecting error handling in observables or HTTP calls can cause silent failures and poor user experience.
+
+<Aside type="danger">
+  Unhandled errors in observables lead to silent failures, making debugging and troubleshooting extremely difficult.
+</Aside>
+
+**Always:**
+
+- Use `catchError` in observable pipelines
+- Implement global error handlers
+
+```typescript
+import { throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+this.dataService.getData()
+  .pipe(
+    catchError(error => {
+      console.error('Request failed:', error);
+      return throwError(() => new Error('Failed to load data'));
+    })
+  )
+  .subscribe();
+```
+
+---
+
+## Misuse of Direct DOM Manipulation
+
+Directly manipulating the DOM using `ElementRef` or native APIs bypasses Angular's change detection and can lead to inconsistencies between the component state and the rendered DOM.
+
+<Aside type="caution">
+  Direct DOM manipulation bypasses Angular's change detection system and can cause synchronization issues.
+</Aside>
+
+**Best approach:**
+
+- Use data binding and directives
+- If necessary, use `Renderer2` for safe DOM updates
+
+<Tabs>
+  <TabItem label="❌ Avoid">
+    ```typescript
+    constructor(private el: ElementRef) {
+      this.el.nativeElement.style.color = 'red';
+    }
+    ```
+  </TabItem>
+  <TabItem label="✅ Prefer">
+    ```typescript
+    @HostBinding('style.color') color = 'red';
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## Incorrect Module and Component Organization
+
+Failing to modularize code leads to monolithic, hard-to-maintain applications with tangled dependencies and poor code reusability.
+
+<Aside type="tip">
+  Proper modularization makes your application scalable, testable, and easier to maintain as it grows.
+</Aside>
+
+**Recommendations:**
+
+- Use feature modules
+- Separate `core`, `shared`, and `features` modules
+- Follow a consistent folder structure
+
+```
+app/
+├── core/
+│   ├── services/
+│   ├── guards/
+│   └── core.module.ts
+├── shared/
+│   ├── components/
+│   ├── directives/
+│   ├── pipes/
+│   └── shared.module.ts
+├── features/
+│   ├── product/
+│   │   ├── product.module.ts
+│   │   ├── product.component.ts
+│   │   ├── product.service.ts
+│   │   └── pages/
+│   └── user/
+│       ├── user.module.ts
+│       ├── user.component.ts
+│       └── user.service.ts
+└── app.module.ts
+```
+
+---
+
+## Summary
+
+Avoiding these common issues from the start sets a strong foundation for your Angular project. Always prioritize:
+
+✓ Clean subscription management  
+✓ Explicit data flow  
+✓ Comprehensive error handling  
+✓ Angular-first DOM manipulation  
+✓ Strategic module organization

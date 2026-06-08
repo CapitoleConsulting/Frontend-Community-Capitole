@@ -1,0 +1,453 @@
+---
+title: Module Architecture
+description: Design scalable and maintainable module structures in Angular. Learn how to organize feature modules, dependency management, and avoid common architectural pitfalls.
+sidebar.order: 8
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Module Architecture Overview
+
+A well-designed module architecture is foundational to building scalable Angular applications. It defines how your application is organized, how modules communicate, and how dependencies flow through the system.
+
+## Core Principles
+
+### 1. Single Responsibility
+
+Each module should have **one reason to change**.
+
+<Tabs>
+  <TabItem label="❌ Bad (Multiple Responsibilities)">
+    ```ts
+    @NgModule({
+      declarations: [
+        UserComponent,
+        AdminComponent,
+        DashboardComponent,
+        ReportComponent
+      ],
+      imports: [
+        CommonModule,
+        HttpClientModule,
+        RouterModule,
+        MaterialModule
+      ]
+    })
+    export class AppModule {}
+
+    // This module handles: users, admin, dashboard, reporting
+    // Too many responsibilities!
+    ```
+  </TabItem>
+  <TabItem label="✅ Good (Single Responsibility)">
+    ```ts
+    // app.module.ts - Only handles app setup
+    @NgModule({
+      imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        CoreModule,
+        AppRoutingModule
+      ]
+    })
+    export class AppModule {}
+
+    // user.module.ts - Only handles user feature
+    @NgModule({
+      declarations: [UserListComponent, UserDetailComponent],
+      imports: [CommonModule, UserRoutingModule, SharedModule]
+    })
+    export class UserModule {}
+    ```
+  </TabItem>
+</Tabs>
+
+### 2. Loose Coupling
+
+Modules should depend on abstractions, not concrete implementations.
+
+```ts
+// ❌ Tight coupling
+@NgModule({
+  providers: [
+    UserService,
+    HttpUserRepository
+  ]
+})
+export class UserModule {}
+
+// ✅ Loose coupling
+export interface IUserRepository {
+  getUsers(): Observable<User[]>;
+}
+
+@NgModule({
+  providers: [
+    UserService,
+    { provide: IUserRepository, useClass: HttpUserRepository }
+  ]
+})
+export class UserModule {}
+```
+
+### 3. High Cohesion
+
+Related functionality should be grouped together.
+
+```
+✅ Good - related items together
+features/
+├── user/
+│   ├── user.service.ts       (user-related)
+│   ├── user.component.ts     (user-related)
+│   ├── user.model.ts         (user-related)
+│   └── user.module.ts
+
+❌ Bad - scattered everywhere
+features/
+├── user/
+│   └── user.service.ts
+├── components/
+│   └── user.component.ts
+├── models/
+│   └── user.model.ts
+└── modules/
+    └── user.module.ts
+
+# Have to navigate 4 folders to see user feature!
+```
+
+## Module Organization Pattern
+
+### Root Module (AppModule)
+
+Handles app-level setup only:
+
+```ts
+@NgModule({
+  declarations: [AppComponent],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    CoreModule,          // ← Singleton services
+    SharedModule,        // ← Reusable components
+    AppRoutingModule     // ← Routing
+  ],
+  providers: [
+    // App-level interceptors, guards
+  ]
+})
+export class AppModule {}
+```
+
+**Responsibilities:**
+- Bootstrap the application
+- Provide root component
+- Configure MSAL, Material, i18n
+- Set up root routing
+
+### Core Module
+
+Contains singleton services, guards, interceptors:
+
+```ts
+@NgModule({
+  providers: [
+    AuthService,
+    AuthGuard,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
+      multi: true
+    }
+  ]
+})
+export class CoreModule {
+  constructor(@Optional() @SkipSelf() core: CoreModule) {
+    if (core) {
+      throw new Error('CoreModule already imported');
+    }
+  }
+}
+
+// In AppModule
+imports: [CoreModule] // ← Import only in AppModule
+```
+
+**Best Practice:** Prevent multiple imports with `@SkipSelf()`
+
+### Shared Module
+
+Contains reusable components, directives, pipes:
+
+```ts
+@NgModule({
+  declarations: [
+    ButtonComponent,
+    ModalComponent,
+    HighlightDirective,
+    PhoneFormatPipe
+  ],
+  imports: [CommonModule, MaterialModule],
+  exports: [
+    ButtonComponent,
+    ModalComponent,
+    HighlightDirective,
+    PhoneFormatPipe,
+    MaterialModule // ← Make Material available to feature modules
+  ]
+})
+export class SharedModule {}
+
+// Feature modules import SharedModule
+@NgModule({
+  imports: [
+    CommonModule,
+    SharedModule  // ← Get reusable components
+  ]
+})
+export class UserModule {}
+```
+
+### Feature Modules
+
+Organized by domain/feature:
+
+<Tabs>
+  <TabItem label="Structure">
+    ```
+    src/app/features/user/
+    ├── components/
+    │   ├── user-list/
+    │   │   ├── user-list.component.ts
+    │   │   ├── user-list.component.html
+    │   │   └── user-list.component.scss
+    │   └── user-detail/
+    │       ├── user-detail.component.ts
+    │       ├── user-detail.component.html
+    │       └── user-detail.component.scss
+    ├── services/
+    │   └── user.service.ts
+    ├── models/
+    │   └── user.model.ts
+    ├── user-routing.module.ts
+    ├── user.module.ts
+    └── user.facade.ts (optional)
+    ```
+  </TabItem>
+  <TabItem label="Module Code">
+    ```ts
+    // user.module.ts
+    @NgModule({
+      declarations: [
+        UserListComponent,
+        UserDetailComponent
+      ],
+      imports: [
+        CommonModule,
+        UserRoutingModule,
+        SharedModule  // ← Reusable components
+      ],
+      providers: [UserService]
+    })
+    export class UserModule {}
+
+    // app-routing.module.ts
+    const routes: Routes = [
+      {
+        path: 'user',
+        loadChildren: () => import('./features/user/user.module')
+          .then(m => m.UserModule)
+      }
+    ];
+    ```
+  </TabItem>
+</Tabs>
+
+## Dependency Flow Architecture
+
+```
+┌─────────────────────────────────────────┐
+│ AppModule (Root)                        │
+└─────────────────────────────────────────┘
+         │
+    ┌────┴────────────────────────┐
+    │                              │
+    v                              v
+┌─────────────────┐       ┌──────────────────┐
+│ CoreModule      │       │ SharedModule     │
+│ (Singletons)    │       │ (Reusable)       │
+└─────────────────┘       └──────────────────┘
+         │                      │
+         │                      │
+    Services, Guards       Components, Pipes
+    Interceptors           Directives
+         │                      │
+         └──────────┬───────────┘
+                    │
+         ┌──────────┼──────────┐
+         │          │          │
+         v          v          v
+    ┌────────┐ ┌────────┐ ┌────────┐
+    │ User   │ │ Admin  │ │ Report │
+    │ Module │ │ Module │ │ Module │
+    └────────┘ └────────┘ └────────┘
+  (Feature)   (Feature)   (Feature)
+
+→ Arrows show dependency direction (only downward!)
+```
+
+**Key Rule:** Feature modules can depend on Core and Shared, but NOT on each other.
+
+## Avoiding Circular Dependencies
+
+### ❌ Anti-Pattern: Circular Dependency
+
+```ts
+// user.module.ts
+import { AdminModule } from '../admin/admin.module';
+
+@NgModule({
+  imports: [AdminModule]  // ← User depends on Admin
+})
+export class UserModule {}
+
+// admin.module.ts
+import { UserModule } from '../user/user.module';
+
+@NgModule({
+  imports: [UserModule]  // ← Admin depends on User
+})
+export class AdminModule {}
+
+// Result: Circular dependency! Builds fail or behave unpredictably.
+```
+
+### ✅ Solution: Extract to Shared
+
+```ts
+// shared/user-admin-shared/user-admin-shared.module.ts
+@NgModule({
+  declarations: [SharedComponent],
+  exports: [SharedComponent]
+})
+export class UserAdminSharedModule {}
+
+// user.module.ts
+@NgModule({
+  imports: [UserAdminSharedModule]
+})
+export class UserModule {}
+
+// admin.module.ts
+@NgModule({
+  imports: [UserAdminSharedModule]
+})
+export class AdminModule {}
+
+// No circular dependency!
+```
+
+## Facade Pattern for State Management
+
+Centralize feature state and logic in a facade:
+
+```ts
+// user.facade.ts
+@Injectable({ providedIn: 'root' })
+export class UserFacade {
+  private userService = inject(UserService);
+
+  // State
+  users$ = this.userService.getUsers();
+  selectedUser$ = new BehaviorSubject<User | null>(null);
+
+  // Orchestration
+  loadUsers() {
+    return this.userService.getUsers();
+  }
+
+  selectUser(user: User) {
+    this.selectedUser$.next(user);
+  }
+
+  deleteUser(id: string) {
+    return this.userService.deleteUser(id);
+  }
+}
+
+// Components inject facade, not service directly
+@Component({
+  selector: 'app-user-list'
+})
+export class UserListComponent {
+  facade = inject(UserFacade);
+  users$ = this.facade.users$;
+
+  delete(id: string) {
+    this.facade.deleteUser(id).subscribe(/* ... */);
+  }
+}
+```
+
+## Lazy Loading Best Practices
+
+```ts
+// ✅ Good - Route-based code splitting
+const routes: Routes = [
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./features/dashboard/dashboard.module')
+      .then(m => m.DashboardModule)
+  }
+];
+
+// ✅ Also good - Preload strategy
+@Injectable({ providedIn: 'root' })
+export class PreloadCriticalModules implements PreloadingStrategy {
+  preload(route: Route, load: Function): Observable<any> {
+    const preloadModules = ['dashboard', 'profile'];
+    if (preloadModules.includes(route.path || '')) {
+      return load();
+    }
+    return of(null);
+  }
+}
+```
+
+## Module Architecture Checklist
+
+- [ ] Root module only bootstraps app and imports Core/Shared
+- [ ] Core module has guard against multiple imports
+- [ ] Shared module exports reusable components
+- [ ] Feature modules are independent
+- [ ] No circular dependencies between modules
+- [ ] Feature modules lazy-loaded by route
+- [ ] Services provided in correct scope
+- [ ] Dependencies flow downward only
+- [ ] Facade pattern for complex state
+- [ ] Clear separation of concerns
+
+## Anti-Patterns to Avoid
+
+❌ **Monolithic Module** — Single module with everything
+❌ **Shared Service in Feature** — Service created in multiple features
+❌ **Tight Coupling** — Hard dependencies on concrete classes
+❌ **Circular Dependencies** — Modules depending on each other
+❌ **Provider Duplication** — Same service in multiple modules
+❌ **No Lazy Loading** — All features loaded upfront
+
+## Benefits of Good Architecture
+
+✅ **Scalability** — Easy to add new features
+✅ **Maintainability** — Clear organization
+✅ **Testability** — Isolated modules easier to test
+✅ **Performance** — Lazy loading reduces bundle size
+✅ **Team Collaboration** — Clear patterns everyone understands
+✅ **Reusability** — Shared components used across features
+
+---
+
+## References
+
+- [Angular Module Architecture](https://medium.com/@sehban.alam/mastering-modular-architecture-in-angular-4cc2632fc964)

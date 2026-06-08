@@ -2,7 +2,66 @@
 
 Welcome to the **Frontend Community** repository.
 
-This space is designed to centralize knowledge, share best practices, and foster collaboration among frontend developers across the company.
+This space is designed to centralize knowledge, share best practices, foster collaboration, and recognize contributions from frontend developers across the company.
+
+---
+
+## 🌐 Community Portal
+
+Documentation website:
+
+**https://capitoleconsulting.github.io/Frontend-Community-Capitole/**
+
+This repository powers the Frontend Community portal, where all documentation, architecture guidelines, examples, articles and community resources are published.
+
+---
+
+## 🏆 Community Leaderboard
+
+<!-- LEADERBOARD:START -->
+
+| Position | User | Points | Rank |
+|---:|---|---:|---|
+| 1 | Isaac García | 365 | Advanced Contributor |
+| 2 | Nadia Ujovich | 160 | Contributor |
+| 3 | angellogar | 50 | Rookie |
+| 4 | hndcore.io | 25 | Rookie |
+| 5 | Luis Miguel García Palomares | 20 | Rookie |
+| 6 | Alexis Valdez | 20 | Rookie |
+| 7 | Juan Angel García Jimenez | 15 | Rookie |
+| 8 | Juan Francisco Martin Marcos | 15 | Rookie |
+| 9 | Simon Pedro Hernandez Leal | 15 | Rookie |
+| 10 | Jose Vicente Lucas Poveda | 10 | Rookie |
+| 11 | Hugo Barceló Díez | 10 | Rookie |
+| 12 | Francisco Javier Padrón | 10 | Rookie |
+| 13 | Víctor Jose Navarro Rodríguez | 10 | Rookie |
+| 14 | Roger Porta | 10 | Rookie |
+| 15 | David Portilla Saldaña | 10 | Rookie |
+| 16 | Hugo Moragues Valencia | 10 | Rookie |
+| 17 | Manuel Lopez Camarena | 10 | Rookie |
+| 18 | Víctor Álvarez Martínez | 10 | Rookie |
+| 19 | Marco Aguilera | 5 | Rookie |
+| 20 | Ernesto Nicolas Rickert | 5 | Rookie |
+| 21 | Bryan Kevin Condor | 5 | Rookie |
+
+_Last updated: 2026-06-04T16:53:56.439Z_
+
+<!-- LEADERBOARD:END -->
+
+The leaderboard is automatically updated through GitHub Actions when approved contributions are merged.
+
+---
+
+## 🎖️ Community Ranks
+
+| Rank                 |    Points |
+| -------------------- | --------: |
+| Rookie               |      0–99 |
+| Contributor          |   100–299 |
+| Advanced Contributor |   300–699 |
+| Community Builder    |  700–1499 |
+| Frontend Champion    | 1500–2999 |
+| Frontend Legend      |     3000+ |
 
 ---
 
@@ -16,6 +75,7 @@ The goal of this repository is to:
 * Provide reusable solutions and patterns
 * Improve consistency across projects
 * Support onboarding of new developers
+* Reward and recognize valuable contributions
 
 ---
 
@@ -38,6 +98,164 @@ The goal of this repository is to:
 
 ---
 
+# 📌 Community Points System
+
+Community members earn points by contributing valuable knowledge, helping others, and improving the frontend ecosystem.
+
+---
+
+## ✍️ Technical Articles
+
+Approx. 2 useful pages of real technical content.
+
+### Base points
+
+| Type                     | Points |
+| ------------------------ | -----: |
+| Short article            |     40 |
+| Medium technical article |     70 |
+| Deep reference article   |    120 |
+
+### Bonuses
+
+| Bonus                         | Points |
+| ----------------------------- | -----: |
+| Useful real code              |    +10 |
+| Diagrams or visual examples   |    +10 |
+| Useful technical comparison   |    +15 |
+| Highly rated by the community |    +20 |
+
+### Limits
+
+* Maximum 2 scored articles per month.
+* Low-effort or clearly AI-generated content may receive a 50% reduction.
+
+---
+
+## 🧩 GitHub Contributions
+
+Commits do not score.
+
+Only approved and merged Pull Requests are considered.
+
+### Base points
+
+| Contribution Type                        | Points |
+| ---------------------------------------- | -----: |
+| Small documentation fix                  |      5 |
+| Small useful improvement                 |     10 |
+| New useful guide or pattern              |     25 |
+| Relevant technical example               |     35 |
+| Major refactor or structural improvement |     50 |
+| Reusable tool / boilerplate              | 80–120 |
+
+### Multipliers
+
+| Situation                          | Bonus |
+| ---------------------------------- | ----: |
+| Approved without requested changes |   +10 |
+| Affects multiple frameworks        |   +15 |
+| Widely adopted by the community    |   +20 |
+
+### Limits
+
+* Maximum 3 small contributions per week.
+* Micro commits do not score.
+
+---
+
+## 🎤 Organizing Talks
+
+### Base points
+
+| Type                    | Points |
+| ----------------------- | -----: |
+| Lightning talk          |     80 |
+| Standard talk           |    150 |
+| Technical workshop      |    220 |
+| Full practical workshop |    300 |
+
+### Bonuses
+
+| Bonus                   | Points |
+| ----------------------- | -----: |
+| Live demo               |    +20 |
+| Shared materials        |    +20 |
+| Recording/documentation |    +25 |
+| Excellent feedback      |    +30 |
+
+---
+
+## 🤝 Helping Juniors & Newcomers
+
+### Base points
+
+| Action                   | Points |
+| ------------------------ | -----: |
+| Quick help               |     10 |
+| Short 1:1 session        |     25 |
+| Useful mentoring         |     40 |
+| Ongoing mentoring        |     60 |
+| Critical unblock support |     80 |
+
+### Bonuses
+
+| Bonus                | Points |
+| -------------------- | -----: |
+| Excellent feedback   |    +15 |
+| Consistent mentoring |    +20 |
+
+---
+
+## 👥 Participation in Events
+
+### Base points
+
+| Action                    | Points |
+| ------------------------- | -----: |
+| Attendance                |      5 |
+| Active participation      |     10 |
+| Relevant questions        |     15 |
+| Useful follow-up feedback |     20 |
+
+### Limits
+
+* Maximum 1 scored event per day.
+* Being present alone is not enough.
+
+---
+
+## 🧪 Experiments & PoCs
+
+| Type                                | Points |
+| ----------------------------------- | -----: |
+| Interesting idea                    |     15 |
+| Functional PoC                      |     50 |
+| Advanced PoC                        |     90 |
+| Technology adopted by the community |    150 |
+
+---
+
+## 📚 Documentation
+
+| Type                    | Points |
+| ----------------------- | -----: |
+| Small documentation     |     10 |
+| Onboarding guide        |     40 |
+| Architecture guide      |     70 |
+| Reference documentation |    120 |
+
+---
+
+## 🏅 Consistency Bonuses
+
+| Action                  | Bonus |
+| ----------------------- | ----: |
+| 3 active weeks in a row |   +40 |
+| 2 active months         |  +100 |
+
+---
+
 ## 🤝 How to contribute
 
 We encourage everyone to participate.
@@ -49,6 +267,8 @@ You can contribute by:
 * Sharing patterns or solutions
 * Proposing new ideas or tools
 * Fixing issues or inconsistencies
+* Helping other community members
+* Creating talks, workshops, or PoCs
 
 ### Contribution workflow
 
@@ -56,6 +276,7 @@ You can contribute by:
 2. Make your changes
 3. Open a Pull Request
 4. Request review from the community
+5. Add the appropriate points label if applicable
 
 ---
 
@@ -69,190 +290,58 @@ You can contribute by:
 
 ---
 
+## 🤖 Automation
+
+This repository includes GitHub Actions for:
+
+* Automatic deployment to GitHub Pages
+* Community points calculation
+* Leaderboard generation
+* Pull Request validation workflows
+* Automated contribution tracking
+
+Points are awarded automatically when approved Pull Requests are merged into `main`.
+
+The leaderboard is updated automatically after each validated contribution.
+
+---
+
 ## 🧭 Repository structure
 
-This repository is an [Astro](https://astro.build/) site powered by
-[Starlight](https://starlight.astro.build/). All documentation and code
-examples live as Markdown / MDX inside `src/content/docs/`.
+This repository is an Astro site powered by Starlight.
 
 ```text
 src/content/docs/
-├── index.mdx              → Landing page
-├── docs/                  → Onboarding, ADRs, glossary
-├── angular/               → Guidelines, architecture, examples in Angular
-├── react/                 → Guidelines, architecture, examples in React
-├── vue/                   → Guidelines, architecture, examples in Vue
-├── others/                → Svelte, Web Components, experiments
-└── shared/                → Cross-cutting topics (a11y, perf, testing, …)
+├── index.mdx
+├── docs/
+├── angular/
+├── react/
+├── vue/
+├── others/
+└── shared/
 ```
+
+---
 
 ## 🛠️ Local development
 
 ```bash
 npm install
-npm run dev      # start the dev server at http://localhost:4321
-npm run build    # build the static site to ./dist
-npm run preview  # preview the production build locally
-```
-
-> ⚠️ **Search is only available in production builds.** Starlight's search index isn't generated during `npm run dev`. To test search locally, run `npm run build` followed by `npm run preview`.
-
----
-
-## 📝 How to add documentation or examples
-
-The site is built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/). Every `.md` or `.mdx` file inside `src/content/docs/` is automatically turned into a page.
-
-### Step 1 — Pick the right folder
-
-Place your file in the section that matches its content:
-
-| Folder | Content |
-|---|---|
-| `src/content/docs/docs/` | Onboarding, ADRs, glossary |
-| `src/content/docs/angular/` | Guidelines, examples, Angular patterns |
-| `src/content/docs/react/` | Guidelines, examples, React patterns |
-| `src/content/docs/vue/` | Guidelines, examples, Vue patterns |
-| `src/content/docs/others/` | Svelte, Web Components, experiments |
-| `src/content/docs/shared/` | Cross-cutting topics: a11y, perf, testing, etc. |
-
-Each section has sub-folders by topic (e.g. `react/examples/`, `angular/guidelines/`). Use the sub-folder that best describes your contribution.
-
-### Step 2 — Create the file
-
-Create a `.md` or `.mdx` file with a descriptive name in [kebab-case](https://en.wikipedia.org/wiki/Letter_case#Kebab_case):
-
-```
-src/content/docs/react/examples/use-reducer-cart.md
-src/content/docs/shared/testing/unit-testing-hooks.mdx
-```
-
-**When to use `.md` vs `.mdx`?**
-
-- `.md` — sufficient for text, code, and simple tables.
-- `.mdx` — required if you want to use Starlight components (callouts, tabs, cards) or JSX inside the content.
-
-### Step 3 — Add frontmatter
-
-Every file must start with a frontmatter block containing at least `title` and `description`:
-
-```md
----
-title: useReducer for a shopping cart
-description: Example of complex state management with useReducer in React.
----
-
-Content goes here...
-```
-
-Useful Starlight frontmatter properties:
-
-| Property | Description |
-|---|---|
-| `title` | **Required.** Title shown on the page and in the sidebar. |
-| `description` | **Recommended.** Short description for SEO and previews. |
-| `sidebar.order` | Number to control order within the section (lower = first). |
-| `sidebar.label` | Alternative label for the sidebar (if different from the title). |
-
-### Step 4 — Write the content
-
-For a `.md` file:
-
-```md
----
-title: useReducer for a shopping cart
-description: Example of complex state management with useReducer in React.
----
-
-## Why useReducer
-
-When state has multiple sub-values or transitions depend on the previous state,
-`useReducer` is preferable to `useState`.
-
-## Example
-
-```tsx
-type Action =
-  | { type: 'add'; item: CartItem }
-  | { type: 'remove'; id: string };
-
-function cartReducer(state: CartItem[], action: Action): CartItem[] {
-  switch (action.type) {
-    case 'add':    return [...state, action.item];
-    case 'remove': return state.filter(i => i.id !== action.id);
-  }
-}
-\`\`\`
-```
-
-For a `.mdx` file you can use Starlight components:
-
-```mdx
----
-title: Testing hooks with React Testing Library
-description: How to test custom hooks in React with RTL.
----
-
-import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
-
-<Aside type="tip">
-  Use `renderHook` to test hooks without needing a wrapper component.
-</Aside>
-
-<Tabs>
-  <TabItem label="Hook">
-    ```ts
-    export function useCounter(initial = 0) {
-      const [count, setCount] = useState(initial);
-      return { count, increment: () => setCount(c => c + 1) };
-    }
-    ```
-  </TabItem>
-  <TabItem label="Test">
-    ```ts
-    it('increments the counter', () => {
-      const { result } = renderHook(() => useCounter(0));
-      act(() => result.current.increment());
-      expect(result.current.count).toBe(1);
-    });
-    ```
-  </TabItem>
-</Tabs>
-```
-
-### Step 5 — Verify in the local server
-
-```bash
 npm run dev
+npm run build
+npm run preview
 ```
 
-Open [http://localhost:4321](http://localhost:4321). Your page appears in the sidebar automatically under the section matching the folder you placed it in.
-
-### Note: creating a new folder
-
-If you need to create a sub-folder that doesn't exist yet (e.g. `react/hooks/`), you also need to register it in the sidebar inside `astro.config.mjs`:
-
-```js
-// astro.config.mjs
-{
-  label: "React",
-  items: [
-    // ...existing entries
-    { label: "Hooks", autogenerate: { directory: "react/hooks" } }, // ← add this
-  ],
-}
-```
-
-Without that entry the file exists but won't appear in the navigation sidebar.
+> Search is only available in production builds.
 
 ---
 
 ## 🚀 Vision
 
-Build a strong frontend culture where knowledge is shared, quality is consistent, and innovation is encouraged.
+Build a strong frontend culture where knowledge is shared, quality is consistent, contributions are recognized, and innovation is encouraged.
 
 ---
 
 ## 📬 Questions or ideas?
 
-Feel free to open an issue or start a discussion.
+Feel free to open an issue, start a discussion, or contribute through a Pull Request.

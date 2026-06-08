@@ -1,0 +1,334 @@
+---
+title: Dependency Injection
+description: Master Angular's Dependency Injection system. Learn when to use inject() vs constructor injection, how to provide dependencies, and best practices for modern Angular.
+sidebar.order: 3
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## What is Dependency Injection?
+
+**Dependency Injection (DI)** is a design pattern where a class receives its dependencies from external sources rather than creating them itself.
+
+### Without DI (❌ Bad)
+
+```ts
+export class UserComponent {
+  private userService = new UserService(); // Creates dependency internally
+  
+  loadUsers() {
+    this.userService.getUsers().subscribe(users => {
+      console.log(users);
+    });
+  }
+}
+```
+
+**Problems:**
+- Hard to test (can't mock `UserService`)
+- Tightly coupled to `UserService`
+- If `UserService` requires dependencies, `UserComponent` must know about them
+
+### With DI (✅ Good)
+
+```ts
+export class UserComponent {
+  constructor(private userService: UserService) {} // Dependency injected
+  
+  loadUsers() {
+    this.userService.getUsers().subscribe(users => {
+      console.log(users);
+    });
+  }
+}
+```
+
+**Benefits:**
+- Easy to test (can inject mock service)
+- Loosely coupled
+- Angular manages the service lifecycle
+
+## Constructor Injection vs inject() Function
+
+Angular provides two ways to inject dependencies:
+
+### Constructor Injection (Traditional)
+
+<Tabs>
+  <TabItem label="Single Dependency">
+    ```ts
+    import { Component } from '@angular/core';
+    import { UserService } from './user.service';
+
+    @Component({
+      selector: 'app-user',
+      template: '<div>{{ users | json }}</div>'
+    })
+    export class UserComponent {
+      users: User[] = [];
+
+      constructor(private userService: UserService) {
+        this.userService.getUsers().subscribe(users => {
+          this.users = users;
+        });
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Multiple Dependencies">
+    ```ts
+    export class UserComponent {
+      constructor(
+        private userService: UserService,
+        private notificationService: NotificationService,
+        private router: Router,
+        private route: ActivatedRoute
+      ) {}
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### inject() Function (Modern - Angular 14+)
+
+<Tabs>
+  <TabItem label="Single Dependency">
+    ```ts
+    import { Component, inject } from '@angular/core';
+    import { UserService } from './user.service';
+
+    @Component({
+      selector: 'app-user',
+      template: '<div>{{ users | json }}</div>'
+    })
+    export class UserComponent {
+      users: User[] = [];
+      private userService = inject(UserService);
+
+      ngOnInit() {
+        this.userService.getUsers().subscribe(users => {
+          this.users = users;
+        });
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Multiple Dependencies">
+    ```ts
+    export class UserComponent {
+      private userService = inject(UserService);
+      private notificationService = inject(NotificationService);
+      private router = inject(Router);
+      private route = inject(ActivatedRoute);
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Comparison
+
+| Aspect | Constructor | inject() |
+|--------|------------|----------|
+| **Angular version** | All versions | 14+ |
+| **Syntax** | Less boilerplate | More explicit |
+| **Readability** | Parameter list can get long | Clear and organized |
+| **Optional injection** | ❌ Requires Optional() | ✅ Built-in support |
+| **Flexibility** | Less flexible | More flexible |
+
+<Aside type="tip">
+**Modern recommendation**: Use `inject()` in new code (Angular 14+). It's more readable and flexible.
+</Aside>
+
+## Providing Dependencies
+
+### Method 1: providedIn: 'root' (Recommended)
+
+```ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  // This service is a singleton available app-wide
+}
+```
+
+**Benefits:**
+- Singleton instance across the entire app
+- Tree-shakeable (unused services removed in production build)
+- Simplest approach
+- Best for services needed throughout the app
+
+### Method 2: providedIn: 'platform'
+
+```ts
+@Injectable({ providedIn: 'platform' })
+export class LoggingService {
+  // Shared across all app instances
+}
+```
+
+**Use when:** Service must be shared across multiple Angular applications on the same page
+
+### Method 3: Feature Module Providers
+
+```ts
+@NgModule({
+  providers: [UserService]
+})
+export class UserModule {}
+```
+
+**Use when:** Service is only needed within a specific feature module
+
+### Method 4: Component Providers
+
+```ts
+@Component({
+  selector: 'app-user',
+  providers: [UserService]
+})
+export class UserComponent {
+  // Each component instance gets its own UserService
+}
+```
+
+**Use when:** Service must be unique per component instance
+
+## Optional Dependencies
+
+### With Constructor Injection
+
+```ts
+import { Component, Optional } from '@angular/core';
+
+export class UserComponent {
+  constructor(@Optional() private userService?: UserService) {
+    if (this.userService) {
+      // Use service
+    }
+  }
+}
+```
+
+### With inject()
+
+```ts
+import { Component, inject } from '@angular/core';
+
+export class UserComponent {
+  private userService = inject(UserService, { optional: true });
+
+  ngOnInit() {
+    if (this.userService) {
+      // Use service
+    }
+  }
+}
+```
+
+## Practical Examples
+
+### User Service with API
+
+```ts
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private http = inject(HttpClient);
+  private apiUrl = '/api/users';
+
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(this.apiUrl);
+  }
+
+  getUserById(id: string): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/${id}`);
+  }
+}
+```
+
+### Component Using Injected Service
+
+```ts
+import { Component, inject, OnInit } from '@angular/core';
+import { UserService } from './user.service';
+
+@Component({
+  selector: 'app-user-list',
+  template: `
+    <div *ngFor="let user of users">
+      <h3>{{ user.name }}</h3>
+      <p>{{ user.email }}</p>
+    </div>
+  `
+})
+export class UserListComponent implements OnInit {
+  users: User[] = [];
+  private userService = inject(UserService);
+
+  ngOnInit() {
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;
+    });
+  }
+}
+```
+
+### Multiple Injected Dependencies
+
+```ts
+import { Component, inject } from '@angular/core';
+import { UserService } from './user.service';
+import { NotificationService } from './notification.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-user-manager'
+})
+export class UserManagerComponent {
+  private userService = inject(UserService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+
+  deleteUser(userId: string) {
+    this.userService.deleteUser(userId).subscribe({
+      next: () => {
+        this.notificationService.showSuccess('User deleted');
+        this.router.navigate(['/users']);
+      },
+      error: (err) => {
+        this.notificationService.showError('Failed to delete user');
+      }
+    });
+  }
+}
+```
+
+## Dependency Injection Checklist
+
+- [ ] Services use `@Injectable({ providedIn: 'root' })`
+- [ ] Components inject services via `inject()` or constructor
+- [ ] No manual service instantiation with `new`
+- [ ] Optional dependencies marked with `@Optional()` or `{ optional: true }`
+- [ ] Services are singletons where appropriate
+- [ ] No circular dependencies between services
+- [ ] Service dependencies documented in JSDoc
+
+## Best Practices
+
+✅ **Always use DI** for services and dependencies
+✅ **Use providedIn: 'root'** for app-wide services
+✅ **Keep services focused** on a single responsibility
+✅ **Test with mock services** injected via DI
+✅ **Use inject()** in new code (Angular 14+)
+✅ **Provide in the narrowest scope** needed
+✅ **Document required dependencies** in service JSDoc
+
+---
+
+## References
+
+- [inject() Function](https://angular.dev/api/core/inject)

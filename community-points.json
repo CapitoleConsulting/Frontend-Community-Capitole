@@ -1,0 +1,231 @@
+{
+  "users": {
+    "Isaacgc1999": {
+      "name": "Isaac García",
+      "points": 365,
+      "rank": "Advanced Contributor"
+    },
+    "nujovich": {
+      "name": "Nadia Ujovich",
+      "points": 160,
+      "rank": "Contributor"
+    },
+    "angellogar": {
+      "points": 65,
+      "rank": "Rookie"
+    },
+    "hndcore": {
+      "name": "hndcore.io",
+      "points": 35,
+      "rank": "Rookie"
+    },
+    "luismiguel-garcia": {
+      "name": "Luis Miguel García Palomares",
+      "points": 20,
+      "rank": "Rookie"
+    },
+    "alexis-valdez": {
+      "name": "Alexis Valdez",
+      "points": 20,
+      "rank": "Rookie"
+    },
+    "josevicente-lucas": {
+      "name": "Jose Vicente Lucas Poveda",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "hugo-barcelo": {
+      "name": "Hugo Barceló Díez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "francisco-padron": {
+      "name": "Francisco Javier Padrón",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "victor-navarro": {
+      "name": "Víctor Jose Navarro Rodríguez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "jacobo-gonzalez": {
+      "name": "Jacobo Gonzalez Dorta",
+      "githubUsername": "jacobogonzalez",
+      "points": 15,
+      "rank": "Rookie"
+    },
+    "juanfrancisco-martin": {
+      "name": "Juan Francisco Martin Marcos",
+      "points": 15,
+      "rank": "Rookie"
+    },
+    "roger-porta": {
+      "name": "Roger Porta",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "david-portilla": {
+      "name": "David Portilla Saldaña",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "hugo-moragues": {
+      "name": "Hugo Moragues Valencia",
+      "githubUsername": "hmorv",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "marco-aguilera": {
+      "name": "Marco Aguilera",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "ernesto-rickert": {
+      "name": "Ernesto Nicolas Rickert",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "bryan-condor": {
+      "name": "Bryan Kevin Condor",
+      "githubUsername": "vaayroon",
+      "points": 5,
+      "rank": "Rookie"
+    },
+    "victor-alvarez": {
+      "name": "Víctor Álvarez Martínez",
+      "points": 10,
+      "rank": "Rookie"
+    },
+    "simon-hernandez": {
+      "name": "Simon Pedro Hernandez Leal",
+      "githubUsername": "simonpedro33",
+      "points": 15,
+      "rank": "Rookie"
+    }
+  },
+  "history": [
+    {
+      "prNumber": "manual-retroactive-001",
+      "prTitle": "Retroactive points assignment - admin contribution",
+      "prUrl": "",
+      "author": "Isaacgc1999",
+      "labels": [
+        "manual:retroactive",
+        "role:admin",
+        "role:moderator"
+      ],
+      "points": 275,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-002",
+      "prTitle": "Retroactive points assignment - admin contribution",
+      "prUrl": "",
+      "author": "nujovich",
+      "labels": [
+        "manual:retroactive",
+        "role:admin",
+        "role:moderator"
+      ],
+      "points": 160,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-003",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "angellogar",
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-004",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "angellogar",
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "manual-retroactive-005",
+      "prTitle": "Retroactive points assignment - useful guide or pattern",
+      "prUrl": "",
+      "author": "hndcore",
+      "labels": [
+        "manual:retroactive",
+        "points:guide-pattern"
+      ],
+      "points": 25,
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "prNumber": "24",
+      "prTitle": "chore(points): update user points and ranks for leaderboard",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/24",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:fix-doc"
+      ],
+      "points": 5,
+      "date": "2026-06-02T13:14:53.468Z"
+    },
+    {
+      "prNumber": "26",
+      "prTitle": "feat(leaderboard): implement dynamic leaderboard display with user po…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/26",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:fix-doc",
+        "points:small-improvement"
+      ],
+      "points": 15,
+      "date": "2026-06-02T13:51:42.736Z"
+    },
+    {
+      "prNumber": "28",
+      "prTitle": "feat(leaderboard): enhance leaderboard generation and update document…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/28",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement",
+        "bonus:utility",
+        "bonus:community-used"
+      ],
+      "points": 30,
+      "date": "2026-06-02T14:17:27.584Z"
+    },
+    {
+      "prNumber": "30",
+      "prTitle": "fix(leaderboard): update leaderboard markers for MDX compatibility",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/30",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement",
+        "bonus:utility",
+        "bonus:community-used"
+      ],
+      "points": 30,
+      "date": "2026-06-03T07:12:45.751Z"
+    },
+    {
+      "prNumber": "33",
+      "prTitle": "feat(points): enhance leaderboard with user names and update fetching…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/33",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement"
+      ],
+      "points": 10,
+      "date": "2026-06-04T16:53:56.439Z"
+    }
+  ]
+}

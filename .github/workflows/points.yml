@@ -1,0 +1,55 @@
+name: Award community points
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  award-points:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Award points
+        run: node .github/scripts/award-points.cjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
+
+      - name: Create pull request with points update
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
+          branch: "points/award-pr-${{ github.event.pull_request.number }}"
+          delete-branch: true
+          title: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
+          body: |
+            This PR updates the community points after merging PR #${{ github.event.pull_request.number }}.
+
+            Updated files:
+            - community-points.json
+            - leaderboard.md
+          add-paths: |
+            community-points.json
+            leaderboard.md
+            README.md
+            src/content/docs/index.mdx

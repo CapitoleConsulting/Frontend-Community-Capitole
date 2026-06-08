@@ -1,0 +1,436 @@
+---
+title: Reactive Programming & Forms
+description: Master RxJS observables and reactive forms in Angular. Learn patterns for handling asynchronous operations, form validation, and reactive data streams.
+sidebar.order: 6
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Reactive Programming Fundamentals
+
+**Reactive Programming** means thinking about your application as a series of data flows and transformations.
+
+### Key Concepts
+
+**Observable** — Represents a stream of data that changes over time
+**Subscription** — Listening to an observable
+**Operators** — Functions to transform, filter, or combine observables
+**Async Pipe** — Automatically subscribes to observables in templates
+
+### Observable vs Promise
+
+<Tabs>
+  <TabItem label="Promise (One-time)">
+    ```ts
+    // Promise - single value
+    const promise = fetch('/api/users')
+      .then(response => response.json());
+
+    // Must handle separately
+    promise.then(data => console.log(data));
+    ```
+  </TabItem>
+  <TabItem label="Observable (Stream)">
+    ```ts
+    // Observable - stream of values
+    const observable = this.http.get('/api/users');
+
+    // Can emit multiple values
+    this.http.get('/api/polling').subscribe(data => {
+      console.log(data); // Called multiple times
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+## Common RxJS Operators
+
+### Transform Operators
+
+<Tabs>
+  <TabItem label="map">
+    ```ts
+    // Transform each value
+    this.userService.getUsers()
+      .pipe(
+        map(users => users.map(u => ({ ...u, fullName: `${u.firstName} ${u.lastName}` })))
+      )
+      .subscribe(usersWithFullName => {
+        console.log(usersWithFullName);
+      });
+    ```
+  </TabItem>
+  <TabItem label="filter">
+    ```ts
+    // Only emit matching values
+    this.userService.getUsers()
+      .pipe(
+        filter(users => users.length > 0)
+      )
+      .subscribe(users => {
+        console.log('Has users:', users);
+      });
+    ```
+  </TabItem>
+  <TabItem label="switchMap">
+    ```ts
+    // Flatten nested observables (common in routing)
+    this.route.params.pipe(
+      switchMap(params => this.userService.getUserById(params['id']))
+    ).subscribe(user => {
+      console.log(user);
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+### Combining Operators
+
+```ts
+// Combine multiple observables
+import { combineLatest, forkJoin } from 'rxjs';
+
+// combineLatest - emit whenever any source changes
+combineLatest([
+  this.userService.getUser(),
+  this.settingsService.getSettings()
+]).subscribe(([user, settings]) => {
+  console.log(user, settings);
+});
+
+// forkJoin - wait for all to complete (like Promise.all)
+forkJoin([
+  this.userService.getUsers(),
+  this.roleService.getRoles(),
+  this.permissionService.getPermissions()
+]).subscribe(([users, roles, permissions]) => {
+  console.log(users, roles, permissions);
+});
+```
+
+## Unsubscribing Patterns
+
+### ❌ Bad: Manual Subscription Management
+
+```ts
+export class UserListComponent implements OnInit, OnDestroy {
+  users: User[] = [];
+  private subscription: Subscription;
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit() {
+    this.subscription = this.userService.getUsers()
+      .subscribe(users => {
+        this.users = users;
+      });
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe(); // ← Manual cleanup needed
+  }
+}
+```
+
+### ✅ Good: Async Pipe (Auto-unsubscribe)
+
+```ts
+@Component({
+  selector: 'app-user-list',
+  template: `
+    <div *ngFor="let user of users$ | async">
+      {{ user.name }}
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserListComponent {
+  private userService = inject(UserService);
+  users$ = this.userService.getUsers(); // ← Async pipe handles subscription
+}
+```
+
+### ✅ Good: takeUntilDestroyed Operator
+
+```ts
+export class UserListComponent {
+  private userService = inject(UserService);
+  private destroyRef = inject(DestroyRef);
+  users = signal<User[]>([]);
+
+  ngOnInit() {
+    this.userService.getUsers()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(users => {
+        this.users.set(users);
+      });
+  }
+}
+```
+
+## Reactive Forms
+
+**Reactive Forms** provide a model-driven approach to handling form inputs and validation.
+
+### Basic Reactive Form
+
+```ts
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-user-form',
+  template: `
+    <form [formGroup]="userForm" (ngSubmit)="submit()">
+      <input formControlName="name" 
+             placeholder="Name"
+             [class.error]="isFieldInvalid('name')" />
+      
+      <input formControlName="email" 
+             placeholder="Email"
+             type="email"
+             [class.error]="isFieldInvalid('email')" />
+      
+      <div *ngIf="isFieldInvalid('email')">
+        <p *ngIf="userForm.get('email')?.errors?.['required']">Email required</p>
+        <p *ngIf="userForm.get('email')?.errors?.['email']">Invalid email</p>
+      </div>
+
+      <button [disabled]="userForm.invalid">Save</button>
+    </form>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserFormComponent {
+  private formBuilder = inject(FormBuilder);
+  userForm: FormGroup;
+
+  constructor() {
+    this.userForm = this.formBuilder.group({
+      name: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]]
+    });
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.userForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  submit() {
+    if (this.userForm.valid) {
+      console.log(this.userForm.value);
+    }
+  }
+}
+```
+
+### Typed Reactive Forms (Angular 14+)
+
+```ts
+import { FormBuilder, FormGroup } from '@angular/forms';
+
+interface UserForm {
+  name: string;
+  email: string;
+  age: number;
+}
+
+@Component({
+  selector: 'app-user-form'
+})
+export class UserFormComponent {
+  private formBuilder = inject(FormBuilder);
+  userForm: FormGroup<UserForm>;
+
+  constructor() {
+    this.userForm = this.formBuilder.group<UserForm>({
+      name: this.formBuilder.control('', { nonNullable: true }),
+      email: this.formBuilder.control('', { nonNullable: true }),
+      age: this.formBuilder.control(0, { nonNullable: true })
+    });
+  }
+
+  submit() {
+    const formValue = this.userForm.getRawValue(); // ← Typed!
+    console.log(formValue.name); // ✅ TypeScript knows the type
+  }
+}
+```
+
+## Reactive Form Validation
+
+### Custom Validators
+
+```ts
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+// Function-based validator
+export function minAgeValidator(minAge: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    return value && value < minAge ? { minAge: { value } } : null;
+  };
+}
+
+// Usage
+this.formBuilder.group({
+  age: ['', [Validators.required, minAgeValidator(18)]]
+});
+```
+
+### Async Validators
+
+```ts
+import { AsyncValidator } from '@angular/forms';
+
+@Injectable({ providedIn: 'root' })
+export class EmailTakenValidator implements AsyncValidator {
+  private userService = inject(UserService);
+
+  validate(control: AbstractControl): Observable<ValidationErrors | null> {
+    return this.userService.checkEmailExists(control.value).pipe(
+      map(exists => exists ? { emailTaken: true } : null),
+      catchError(() => of(null))
+    );
+  }
+}
+
+// Usage
+this.formBuilder.group({
+  email: ['', [Validators.required], [this.emailTakenValidator]]
+});
+```
+
+## Combining Observables with Signals
+
+```ts
+@Component({
+  selector: 'app-user-detail'
+})
+export class UserDetailComponent implements OnInit {
+  private userService = inject(UserService);
+  private settingsService = inject(SettingsService);
+  private destroyRef = inject(DestroyRef);
+
+  user = signal<User | null>(null);
+  settings = signal<Settings | null>(null);
+  isLoading = signal(false);
+
+  ngOnInit() {
+    this.isLoading.set(true);
+
+    combineLatest([
+      this.userService.getUser(),
+      this.settingsService.getSettings()
+    ]).pipe(
+      finalize(() => this.isLoading.set(false)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(([user, settings]) => {
+      this.user.set(user);
+      this.settings.set(settings);
+    });
+  }
+}
+```
+
+## RxJS Operators Cheatsheet
+
+| Operator | Purpose |
+|----------|---------|
+| `map()` | Transform each value |
+| `filter()` | Only emit matching values |
+| `switchMap()` | Flatten nested observables |
+| `mergeMap()` | Merge multiple observables |
+| `catchError()` | Handle errors |
+| `tap()` | Side effects (logging) |
+| `debounceTime()` | Wait before emitting |
+| `distinctUntilChanged()` | Emit only when value changes |
+| `take()` | Take first N values |
+| `takeUntil()` | Complete when another observable emits |
+| `timeout()` | Timeout if no value within duration |
+
+## Practical Example: Search with Debounce
+
+```ts
+@Component({
+  selector: 'app-user-search',
+  template: `
+    <input [formControl]="searchControl" 
+           placeholder="Search users..." />
+    
+    <div *ngFor="let user of searchResults$ | async">
+      {{ user.name }}
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserSearchComponent {
+  private userService = inject(UserService);
+  private destroyRef = inject(DestroyRef);
+
+  searchControl = new FormControl('');
+
+  searchResults$ = this.searchControl.valueChanges.pipe(
+    debounceTime(300),           // Wait 300ms after user stops typing
+    distinctUntilChanged(),       // Only if value changed
+    switchMap(query => 
+      query ? this.userService.search(query) : of([])
+    ),
+    takeUntilDestroyed(this.destroyRef)
+  );
+}
+```
+
+## Performance: LazyLoad with RxJS
+
+```ts
+@Component({
+  selector: 'app-user-list'
+})
+export class UserListComponent {
+  private userService = inject(UserService);
+  private destroyRef = inject(DestroyRef);
+
+  users$ = this.userService.getUsers().pipe(
+    // Show loading
+    startWith(null),
+    // Auto-unsubscribe when component destroyed
+    takeUntilDestroyed(this.destroyRef)
+  );
+}
+```
+
+## Reactive Programming Checklist
+
+- [ ] Use `async` pipe to auto-unsubscribe
+- [ ] Use `takeUntilDestroyed()` for imperative subscriptions
+- [ ] Never manually subscribe without cleanup plan
+- [ ] Use `switchMap()` for dependent observables
+- [ ] Use `combineLatest()` for multiple sources
+- [ ] Use `debounceTime()` for search/filter inputs
+- [ ] Handle errors with `catchError()`
+- [ ] Use typed reactive forms (Angular 14+)
+- [ ] Validate forms reactively with observables
+
+## Common Pitfalls
+
+❌ **Forgot to unsubscribe**
+```ts
+this.userService.getUsers().subscribe(...); // Memory leak!
+```
+
+✅ **Use async pipe**
+```ts
+users$ = this.userService.getUsers();
+// template: users$ | async
+```
+
+---
+
+## References
+
+- [RxJS Observables](https://rxjs.dev/)
+- [Angular Reactive Forms](https://angular.dev/guide/forms/reactive-forms)
+- [Async Operations in Angular](https://angular.dev/guide/http)

@@ -19,7 +19,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/Isaacgc1999/Frontend-Community-Capitole",
+          href: "https://github.com/CapitoleConsulting/Frontend-Community-Capitole",
         },
       ],
       sidebar: [
@@ -31,6 +31,7 @@ export default defineConfig({
           label: "Docs",
           items: [
             { label: "Introduction", link: "/docs/" },
+            { label: "Articles", autogenerate: { directory: "docs/articles" } },
             { label: "Onboarding", autogenerate: { directory: "docs/onboarding" } },
             { label: "Decisions (ADRs)", autogenerate: { directory: "docs/decisions" } },
             { label: "Glossary", autogenerate: { directory: "docs/glossary" } },

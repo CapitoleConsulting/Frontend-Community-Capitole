@@ -1,0 +1,399 @@
+---
+title: Smart and Dumb Components
+description: Learn the component architecture pattern that separates presentation logic from business logic. Build scalable, reusable, and testable Angular components.
+sidebar.order: 5
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Overview
+
+The **Smart/Dumb Component** pattern (also called **Container/Presentational**) separates concerns by dividing components into two types:
+
+- **Smart Components** (Containers) — Handle business logic, state management, API calls
+- **Dumb Components** (Presentational) — Display data and handle user input, don't know about business logic
+
+This pattern promotes **reusability, testability, and maintainability**.
+
+## Dumb Components (Presentational)
+
+**Dumb components** are simple, focused components that only display data and emit events.
+
+### Characteristics
+
+```ts
+@Component({
+  selector: 'app-user-card',
+  template: `
+    <div class="card">
+      <h3>{{ user.name }}</h3>
+      <p>{{ user.email }}</p>
+      <button (click)="edit()">Edit</button>
+      <button (click)="delete()">Delete</button>
+    </div>
+  `,
+  styleUrls: ['./user-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush // ← Always use OnPush
+})
+export class UserCardComponent {
+  @Input() user: User; // ← Receives data via input
+  @Output() editClick = new EventEmitter<User>();
+  @Output() deleteClick = new EventEmitter<string>();
+
+  edit() {
+    this.editClick.emit(this.user);
+  }
+
+  delete() {
+    this.deleteClick.emit(this.user.id);
+  }
+}
+```
+
+### Key Characteristics of Dumb Components
+
+✅ **Input/Output Only** — Receives data via `@Input()`, emits events via `@Output()`
+✅ **No Services** — Doesn't inject business logic services
+✅ **No API Calls** — Doesn't fetch or manipulate data
+✅ **Pure Presentation** — Focuses on how things look and basic interactions
+✅ **OnPush Strategy** — Uses `ChangeDetectionStrategy.OnPush` for performance
+✅ **Reusable** — Can be used in multiple places
+✅ **Easy to Test** — Can test with different inputs
+
+### Testing Dumb Components
+
+```ts
+describe('UserCardComponent', () => {
+  let component: UserCardComponent;
+  let fixture: ComponentFixture<UserCardComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserCardComponent]
+    }).compileComponents();
+    
+    fixture = TestBed.createComponent(UserCardComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('should display user name', () => {
+    component.user = { id: '1', name: 'John', email: 'john@example.com' };
+    fixture.detectChanges();
+    
+    const heading = fixture.nativeElement.querySelector('h3');
+    expect(heading.textContent).toBe('John');
+  });
+
+  it('should emit editClick when edit button clicked', () => {
+    component.user = { id: '1', name: 'John', email: 'john@example.com' };
+    spyOn(component.editClick, 'emit');
+    
+    component.edit();
+    
+    expect(component.editClick.emit).toHaveBeenCalledWith(component.user);
+  });
+});
+```
+
+## Smart Components (Container)
+
+**Smart components** handle the business logic and state management.
+
+### Characteristics
+
+```ts
+@Component({
+  selector: 'app-users',
+  template: `
+    <div>
+      <button (click)="loadUsers()">Refresh</button>
+      <app-user-card *ngFor="let user of users()"
+                     [user]="user"
+                     (editClick)="onEdit($event)"
+                     (deleteClick)="onDelete($event)">
+      </app-user-card>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush // ← Still use OnPush!
+})
+export class UsersComponent implements OnInit {
+  private userService = inject(UserService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+
+  users = signal<User[]>([]); // ← State management with signals
+  isLoading = signal(false);
+
+  ngOnInit() {
+    this.loadUsers();
+  }
+
+  loadUsers() {
+    this.isLoading.set(true);
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.users.set(users);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        this.notificationService.showError('Failed to load users');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  onEdit(user: User) {
+    this.router.navigate(['/edit', user.id]);
+  }
+
+  onDelete(userId: string) {
+    this.userService.deleteUser(userId).subscribe({
+      next: () => {
+        this.users.update(users => users.filter(u => u.id !== userId));
+        this.notificationService.showSuccess('User deleted');
+      },
+      error: () => {
+        this.notificationService.showError('Failed to delete user');
+      }
+    });
+  }
+}
+```
+
+### Key Characteristics of Smart Components
+
+✅ **Injects Services** — Depends on business logic services
+✅ **API Calls** — Fetches and manipulates data
+✅ **State Management** — Uses signals for state
+✅ **Orchestration** — Coordinates between child components and services
+✅ **Logic Heavy** — Contains most business logic
+✅ **Less Reusable** — Specific to a particular feature
+✅ **Harder to Test** — Requires mocking services
+
+## Separation of Concerns
+
+### Example: Complete Smart/Dumb Flow
+
+<Tabs>
+  <TabItem label="Dumb: UserFormComponent">
+    ```ts
+    @Component({
+      selector: 'app-user-form',
+      template: `
+        <form (ngSubmit)="submit()">
+          <input [(ngModel)]="userForm.name" name="name" />
+          <input [(ngModel)]="userForm.email" name="email" />
+          <button type="submit">Save</button>
+          <button type="button" (click)="cancel()">Cancel</button>
+        </form>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class UserFormComponent {
+      @Input() initialUser: User | null;
+      @Output() submitted = new EventEmitter<User>();
+      @Output() cancelled = new EventEmitter<void>();
+
+      userForm = {
+        name: this.initialUser?.name || '',
+        email: this.initialUser?.email || ''
+      };
+
+      submit() {
+        this.submitted.emit(this.userForm as User);
+      }
+
+      cancel() {
+        this.cancelled.emit();
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Smart: UserEditComponent">
+    ```ts
+    @Component({
+      selector: 'app-user-edit',
+      template: `
+        <app-user-form [initialUser]="currentUser()"
+                       (submitted)="onSubmit($event)"
+                       (cancelled)="onCancel()">
+        </app-user-form>
+      `,
+      changeDetection: ChangeDetectionStrategy.OnPush
+    })
+    export class UserEditComponent implements OnInit {
+      private route = inject(ActivatedRoute);
+      private userService = inject(UserService);
+      private router = inject(Router);
+      private notificationService = inject(NotificationService);
+
+      currentUser = signal<User | null>(null);
+
+      ngOnInit() {
+        this.route.params.subscribe(params => {
+          this.userService.getUserById(params['id']).subscribe(user => {
+            this.currentUser.set(user);
+          });
+        });
+      }
+
+      onSubmit(user: User) {
+        this.userService.updateUser(user).subscribe({
+          next: (updated) => {
+            this.notificationService.showSuccess('User updated');
+            this.router.navigate(['/users']);
+          },
+          error: () => {
+            this.notificationService.showError('Failed to update user');
+          }
+        });
+      }
+
+      onCancel() {
+        this.router.navigate(['/users']);
+      }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Facade Pattern (Advanced State Management)
+
+For complex state management, use a **Facade** service that handles state and logic:
+
+```ts
+// user.facade.ts
+@Injectable({ providedIn: 'root' })
+export class UserFacade {
+  private userService = inject(UserService);
+
+  users = signal<User[]>([]);
+  isLoading = signal(false);
+  selectedUser = signal<User | null>(null);
+
+  loadUsers() {
+    this.isLoading.set(true);
+    this.userService.getUsers().subscribe({
+      next: (users) => this.users.set(users),
+      finally: () => this.isLoading.set(false)
+    });
+  }
+
+  selectUser(user: User) {
+    this.selectedUser.set(user);
+  }
+
+  deleteUser(id: string) {
+    this.userService.deleteUser(id).subscribe({
+      next: () => {
+        this.users.update(users => users.filter(u => u.id !== id));
+      }
+    });
+  }
+}
+
+// user-list.component.ts
+@Component({
+  selector: 'app-user-list',
+  template: `
+    <app-user-card *ngFor="let user of userFacade.users()"
+                   [user]="user"
+                   (deleteClick)="userFacade.deleteUser($event)">
+    </app-user-card>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserListComponent {
+  userFacade = inject(UserFacade);
+
+  ngOnInit() {
+    this.userFacade.loadUsers();
+  }
+}
+```
+
+## Decision Tree
+
+```
+Is this component showing data?
+├── Yes → Dumb Component
+│   ├── Accepts @Input() data
+│   ├── Emits @Output() events
+│   └── No services injected
+│
+└── No → Smart Component
+    ├── Injects services
+    ├── Manages state
+    └── Makes API calls
+```
+
+## Checklist for Smart/Dumb Components
+
+**Dumb Component Checklist:**
+- [ ] Only uses `@Input()` and `@Output()`
+- [ ] No services injected
+- [ ] No API calls
+- [ ] Uses `ChangeDetectionStrategy.OnPush`
+- [ ] Easy to test with mock inputs
+- [ ] Can be reused in multiple contexts
+
+**Smart Component Checklist:**
+- [ ] Manages state with signals
+- [ ] Injects business services
+- [ ] Makes API calls
+- [ ] Handles errors and loading states
+- [ ] Coordinates child components
+- [ ] Delegates presentation to dumb components
+
+## Benefits of This Pattern
+
+✅ **Reusability** — Dumb components used across multiple features
+✅ **Testability** — Dumb components easier to test, facades easier to mock
+✅ **Maintainability** — Clear separation of concerns
+✅ **Performance** — OnPush strategy on both types
+✅ **Scalability** — Easy to add new features or components
+✅ **Team Collaboration** — Clear pattern everyone understands
+
+## Anti-Pattern: Monolithic Components
+
+❌ **Avoid:**
+```ts
+// All logic in one component
+export class UserComponent {
+  users: User[] = [];
+  selectedUser: User | null = null;
+  isLoading = false;
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit() {
+    // API call
+    // State management
+    // UI logic
+    // Filtering
+    // Sorting
+    // Everything!
+  }
+
+  // 500+ lines of mixed concerns
+}
+```
+
+✅ **Prefer:**
+```
+UserContainerComponent (Smart)
+├── UserList (Dumb)
+│   └── UserCard (Dumb)
+└── UserDetail (Dumb)
+    └── UserForm (Dumb)
+
++ UserFacade (State)
++ UserService (API)
+```
+
+---
+
+## References
+
+- [Container vs Presentational Components](https://blog.angular-university.io/angular-2-smart-components-vs-presentation-components-whats-the-difference-when-to-use-each-and-why/)
+- [Angular Smart vs Dumb Components](https://medium.com/@Angular_With_Awais/angular-smart-vs-dumb-components-solving-input-drilling-the-right-way-80999cce6626)
