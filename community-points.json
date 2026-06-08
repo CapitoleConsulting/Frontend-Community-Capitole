@@ -2,7 +2,7 @@
   "users": {
     "Isaacgc1999": {
       "name": "Isaac García",
-      "points": 365,
+      "points": 435,
       "rank": "Advanced Contributor"
     },
     "nujovich": {
@@ -12,10 +12,11 @@
     },
     "angellogar": {
       "points": 65,
-      "rank": "Rookie"
+      "rank": "Rookie",
+      "name": "Juan Angel Garcia Jimenez"
     },
     "hndcore": {
-      "name": "hndcore.io",
+      "name": "Manuel Lopez Camarena",
       "points": 35,
       "rank": "Rookie"
     },
@@ -45,12 +46,12 @@
       "rank": "Rookie"
     },
     "victor-navarro": {
-      "name": "Víctor Jose Navarro Rodríguez",
+      "name": "Victor Navarro",
       "points": 10,
       "rank": "Rookie"
     },
     "jacobo-gonzalez": {
-      "name": "Jacobo Gonzalez Dorta",
+      "name": "Jacobo",
       "githubUsername": "jacobogonzalez",
       "points": 15,
       "rank": "Rookie"
@@ -66,7 +67,7 @@
       "rank": "Rookie"
     },
     "david-portilla": {
-      "name": "David Portilla Saldaña",
+      "name": "David Portilla",
       "points": 10,
       "rank": "Rookie"
     },
@@ -87,18 +88,18 @@
       "rank": "Rookie"
     },
     "bryan-condor": {
-      "name": "Bryan Kevin Condor",
+      "name": "Bryan Kevin Cóndor Romero",
       "githubUsername": "vaayroon",
       "points": 5,
       "rank": "Rookie"
     },
     "victor-alvarez": {
-      "name": "Víctor Álvarez Martínez",
+      "name": "Victor Alvarez",
       "points": 10,
       "rank": "Rookie"
     },
     "simon-hernandez": {
-      "name": "Simon Pedro Hernandez Leal",
+      "name": "Simón P. Hernández Leal",
       "githubUsername": "simonpedro33",
       "points": 15,
       "rank": "Rookie"
@@ -226,6 +227,19 @@
       ],
       "points": 10,
       "date": "2026-06-04T16:53:56.439Z"
+    },
+    {
+      "prNumber": "36",
+      "prTitle": "feat(points): add GitHub usernames and names for new contributors in …",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/36",
+      "author": "Isaacgc1999",
+      "labels": [
+        "points:small-improvement",
+        "bonus:community-used",
+        "bonus:streak-3weeks"
+      ],
+      "points": 70,
+      "date": "2026-06-08T07:46:55.741Z"
     }
   ]
 }
