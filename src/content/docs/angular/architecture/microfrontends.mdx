@@ -1,0 +1,358 @@
+---
+title: Microfrontends & Module Federation
+description: Implementation guide, fundamental concepts, and best practices for Microfrontend (MFE) architectures using Webpack Module Federation in Angular applications.
+---
+
+# Microfrontends (MFE) with Angular & Module Federation
+
+This guide covers the core architectural concepts, benefits, codebase organization patterns, and the practical implementation of **Microfrontends (MFE)** using **Webpack Module Federation** within Angular multi-repository setups.
+
+---
+
+## 1. What are Microfrontends?
+
+**Microfrontends** represent an extension of the microservices pattern to the frontend layer. Instead of building a massive, tightly-coupled monolithic web application, the user interface is split into a set of autonomous, self-contained sub-applications known as microfrontends.
+
+Each microfrontend:
+- Is owned by a specific vertical domain team.
+- Is developed, tested, and released independently.
+- Is integrated dynamically at runtime into a single, cohesive user experience.
+
+### Key Benefits
+
+*   **Scalability**: Offloads cognitive load and scales organizations efficiently. Teams can work on dedicated business modules (e.g., resources, deployments, billing) without crossing paths.
+*   **Independent Development**: Developers can choose internal release cadences, perform upgrades, and test features without code mergers or dependencies on other teams' internal roadmaps.
+*   **Independent Deployment**: Since every MFE is compiled separately, teams can deploy changes instantly. If one remote application breaks, other features in the shell continue working seamlessly.
+*   **Decoupled Codebases**: Keeps build times extremely fast, prevents accidental tight coupling, and maintains a highly focused codebase footprint.
+
+---
+
+## 2. Monorepo vs. Multirepo Orchestration
+
+When adopting a microfrontend architecture, selecting the codebase management strategy is vital. Both layouts offer distinct characteristics:
+
+### Monorepo Strategy
+All microfrontends and the host container reside in a single corporate repository (e.g., using Nx or Lerna).
+*   **Advantages**: High codebase visibility, easy refactoring across boundaries, simplified single-version dependency policy, and uniform tooling.
+*   **Disadvantages**: Monolithic build queues that scale with size, complex CI caching pipelines to prevent rebuilding unchanged packages, and ease of creating unintended imports between applications.
+
+### Multirepo Strategy
+The Host application and each remote MFE live in their own completely isolated Git repositories.
+*   **Advantages**: Absolute code decoupling, rapid and isolated CI pipelines, independent release cycles without overlapping ownership, and clear domain boundaries.
+*   **Disadvantages**: Version harmonization of shared dependencies requires strict documentation, visual synchronization depends on shared packages, and developer setups require coordinating multiple local repositories.
+
+---
+
+## 3. Architecture Overview (Host vs. Remote)
+
+In a multirepo federation setup, the ecosystem is categorized into two main roles:
+
+*   **Shell (Host)**: The root container application. It manages authentication (e.g., enterprise single sign-on, token refresh), main navigation layouts and shell frames, internationalization engines, and the dynamic loading of and routing to remote microfrontends.
+*   **MFE (Remote)**: Autonomous applications specialized in a specific business feature. They build independently and "expose" modules or components that the Shell loads on demand.
+
+---
+
+## 4. Step-by-Step Implementation Guide
+
+Follow this structured workflow to create, federate, and integrate a new remote microfrontend from scratch.
+
+### Step 1: Initialize the Remote Application
+Create parent folders and initialize your new standalone or module-based Angular project:
+```bash
+ng new core-feature-remote --routing --style=scss
+```
+*Design the internal routing structure so that the application has logical, feature-based lazy-loaded modules right from the start.*
+
+### Step 2: Configure Module Federation
+Install the module federation builder package to hook into Webpack:
+```bash
+npm install @angular-architects/module-federation --save-dev
+```
+
+Run the schematic to transform your Angular build pipeline. Specify a designated local port and indicate that it is a dynamic remote entry:
+```bash
+ng g @angular-architects/module-federation:project core-feature-remote --port 4201 --type module
+```
+*This command automatically generates the `webpack.config.js` and creates an asynchronous bootstrap configuration (`bootstrap.ts`) to ensure shared dependencies load correctly before launching Angular.*
+
+### Step 3: Local Port Allocation
+In a multi-repository environment, it is mandatory to configure unique static ports to prevent local development collisions. In our ecosystem, ports are allocated as follows:
+*   **Shell (Host)**: Port `4200`
+*   **Remote A (e.g., Module Resources)**: Port `4201`
+*   **Remote B (e.g., Module Deployments)**: Port `4202`
+*   **Mock Server**: Port `1080`
+
+Define the port in your remote `angular.json` under the `serve` options:
+```json
+"serve": {
+  "builder": "@angular-devkit/build-angular:dev-server",
+  "options": {
+    "port": 4201
+  }
+}
+```
+
+---
+
+## 5. Webpack & Bootstrap Configuration
+
+### Remote `webpack.config.js`
+The Webpack configuration exposes your features and defines which libraries are shared between Host and Remote as singletons.
+
+Here is a production-grade Webpack setup for a remote microfrontend:
+
+```javascript
+const {
+  shareAll,
+  withModuleFederationPlugin
+} = require('@angular-architects/module-federation/webpack');
+
+const remoteMfConfig = module.exports = withModuleFederationPlugin({
+  name: 'remoteFeatureFront',
+
+  exposes: {
+    './Module': './src/app/feature-entry/feature-entry.module.ts',
+  },
+
+  shared: {
+    "@angular/core": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/common": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/platform-browser": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/platform-browser-dynamic": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/router": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/forms": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+    "@angular/common/http": { singleton: true, strictVersion: false, requiredVersion: '^18.2.0' },
+
+    "rxjs": { singleton: true, strictVersion: false, requiredVersion: '^7.5.0' },
+
+    "@azure/msal-browser": { singleton: true, strictVersion: false, requiredVersion: false },
+    "@azure/msal-angular": { singleton: true, strictVersion: false, requiredVersion: false },
+
+    "@ngx-translate/core": { singleton: true, strictVersion: false, requiredVersion: false },
+    "@ngx-translate/http-loader": { singleton: true, strictVersion: false, requiredVersion: false },
+
+    "shared-design-system-lib": { singleton: false, strictVersion: false, requiredVersion: false },
+  },
+},
+{
+  devServer: {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
+    }
+  }
+});
+
+module.exports = {
+  ...remoteMfConfig,
+  output: {
+    publicPath: 'auto',
+    uniqueName: 'remoteFeatureFront',
+    library: {
+      type: "module",
+    }
+  },
+  optimization: {
+    runtimeChunk: false
+  },
+  experiments: {
+    outputModule: true
+  }
+};
+```
+
+> **CORS Warning**: The `devServer` configuration with CORS headers is strictly required during local development. If missing, the web browser will block the Shell (`port 4200`) from fetching the `remoteEntry.js` metadata and chunks from the remote (`port 4201`), completely interrupting execution.
+
+### Entry Point & Asynchronous Bootstrap
+To avoid loading shared modules before Webpack resolves shared dependencies, Angular's entry point (`main.ts`) must delay bootstrapping.
+
+We divide this process into two files:
+
+`main.ts` (Dynamic asynchronous loader):
+```typescript
+import('./bootstrap').catch(err => console.error(err));
+```
+
+`bootstrap.ts` (Standard Angular bootloader):
+```typescript
+import { platformBrowserDynamic } from '@angular-platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic().bootstrapModule(AppModule)
+  .catch(err => console.error(err));
+```
+
+---
+
+## 6. Dynamic Hybrid Routing Strategy
+
+The host shell implements a **Hybrid Routing Architecture**. This approach merges hardcoded internal routes with dynamic routes fetched from state endpoints, allowing routes to be mapped to Webpack Module Federation components without redeploying the shell.
+
+### Dynamic MFE Route Model (`DynamicRoute`)
+A dynamic remote route structure represents MFE discovery configurations retrieved at runtime:
+
+```typescript
+export interface DynamicRoute {
+  id: string;                     // Unique identifier for the remote MFE
+  path: string;                   // Relative URL segment (e.g., 'features')
+  displayName: string;            // Visual label for menu items
+  type: 'micro-frontend' | 'redirect' | 'internal';
+  
+  // Webpack Module Federation connection properties
+  remoteEntryUrl: string;         // Host address of remoteEntry.js (e.g., 'https://mfe.local/remoteEntry.js')
+  exposedModule: string;          // exposed route name configured in webpack (e.g., './Module')
+  moduleName: string;             // Exported JavaScript module name (e.g., 'FeatureModule')
+  
+  requiresAuth: boolean;          // Guard flag
+  roles: string[];                // User permissions check 
+  isActive: boolean;              // Feature flag toggle
+  icon?: string;                  // Material icon reference
+}
+```
+
+### Routing Compiler Service (`RouteBuilderService`)
+The compiler transforms flat route records into standard Angular route configs, loading modules on demand using `@angular-architects/module-federation`:
+
+```typescript
+import { Route } from '@angular/router';
+import { loadRemoteModule } from '@angular-architects/module-federation';
+import { BaseAuthGuard } from '@core/guards/auth.guard';
+import { GenericRoleGuard } from '@core/guards/role.guard';
+
+@Injectable({ providedIn: 'root' })
+export class RouteBuilderService {
+
+  buildRoute(dynRoute: DynamicRoute): Route {
+    const route: Route = {
+      path: dynRoute.path,
+      canActivate: [],
+      data: { roles: dynRoute.roles }
+    };
+
+    if (dynRoute.requiresAuth) {
+      route.canActivate?.push(BaseAuthGuard);
+    }
+    if (dynRoute.roles && dynRoute.roles.length > 0) {
+      route.canActivate?.push(GenericRoleGuard);
+    }
+
+    if (dynRoute.type === 'micro-frontend') {
+      route.loadChildren = () => 
+        loadRemoteModule({
+          type: 'module',
+          remoteEntry: dynRoute.remoteEntryUrl,
+          exposedModule: dynRoute.exposedModule
+        }).then(m => m[dynRoute.moduleName])
+        .catch(err => {
+          console.error(`Error loading micro-frontend ${dynRoute.displayName}:`, err);
+          throw err;
+        });
+    }
+
+    return route;
+  }
+}
+```
+
+---
+
+## 7. Development, Testing, and Local Mocking
+
+Local developer experience is highly prioritized. To avoid launching heavy monorepos, remotes are designed to run isolated or against mock layers.
+
+### Option A: Clean Local Mocking
+Remotes are pre-equipped with simulated backend environments (using local engines like Mockoon or embedded mock servers):
+```bash
+# Start the local SPA in mock mode
+npm run start:local:mocks
+
+# Simultaneously launch mock services and the remote application
+npm run start:local:mocks:full
+```
+*This starts the server on port `1080` and redirects requests via `proxy.conf.js`, decoupling local developments from live corporate sandbox dependencies.*
+
+### Option B: Integration mode
+Compile and direct calls directly to sandbox/development stages:
+```bash
+npm run start:dev
+```
+*The local execution proxies calls using target cross-platform scripts (`cross-env ENV=dev`) to route API calls securely without encountering CORS rejections or needing complex setups.*
+
+---
+
+## 8. Coexistence Guidelines & CSS Best Practices
+
+Because remote modules are integrated inside the Host's runtime DOM, style overrides or interceptor actions can inadvertently impact global states. Follow these rules to ensure smooth interoperability.
+
+### A. Strict CSS Encapsulation (Style Safety)
+* ❌ **Forbidden**: Coding styles in root layers (such as `main.scss` or `styles.scss` inside remotes) targeted directly at generic HTML selectors (`body`, `main`, `h1`, `p`, etc.). These styles bleed out of the remote and override the Shell frame.
+* ❌ **Forbidden**: Re-declaring global component classes or utility styles introduced by the host layout.
+*  **Mandatory**: Enforce native encapsulation (`ViewEncapsulation.Emulated` + `ChangeDetectionStrategy.OnPush`). Secure all design properties strictly inside the component's discrete `component.scss` context.
+
+### B. Silencing Global Overlays (`X-Skip-Error-Modal`)
+The Shell Host uses a comprehensive error interceptor chain (`ErrorHandlerInterceptor`) that catches failed requests and shows generic UI modals. 
+
+When a remote MFE needs to perform custom error handling (e.g., rendering inline fallbacks, silent retries, or context-specific alerts), it **must tell the Shell's overlay interceptor to stay silent**.
+
+*  **Solution**: Attach the custom heading `X-Skip-Error-Modal` to your HTTP requests:
+```typescript
+import { HttpHeaders, HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class FeatureDetailsRepository {
+  private http = inject(HttpClient);
+
+  fetchDetailsSilently(id: string) {
+    const headers = new HttpHeaders().set('X-Skip-Error-Modal', 'true');
+
+    return this.http.get(`/v1/features/${id}`, { headers });
+  }
+}
+```
+
+* **Under the Hood**:
+  1. The host's `ErrorHandlerInterceptor` intercepts the request and detects `'X-Skip-Error-Modal': 'true'`.
+  2. It **strips this internal header** before sending the request to the backend.
+  3. If the request fails, it logs the stack trace in the console but **skips showing the global error alert**.
+  4. The error propagates to your remote's local facade (`catchError`), allowing you to render custom UI.
+
+### C. Resource Allocation & Environment Assets
+1. **Never rely on absolute asset URLs**: (e.g., `/assets/image.png`). Since the remote runs inside the Host's domain name, absolute paths map to the Host's local asset directory (`localhost:4200/assets/...`), throwing 404 errors. Use relative paths within components or dynamic environment-specific targets (`environment.apiBackendUrl`).
+2. **Strict Singletons**: Ensure fundamental packages (like `@angular/core`, `@angular/common`, `@angular/router`, and `@angular/common/http`) are strictly declared as singletons in `webpack.config.js`. Allowing duplicates spawns multiple runtime zones and routers, breaking change detection and causing memory leaks.
+
+---
+
+By adhering to this framework, we secure optimal performance, zero pipeline overlap, and compile unified modules with a seamless monolithic feeling.
+
+---
+
+## 9. Next-Gen Alternative: Native Federation
+
+For modern Angular applications using versions 17, 18 or 19 with the ultra-fast **esbuild** compiler, traditional Webpack-based Module Federation can be replaced with **Native Federation**. 
+
+For a complete, dedicated guide on implementing this modern esbuild and Vite-compatible architecture, please refer to our standalone [src/content/docs/angular/architecture/native-federation.mdx](src/content/docs/angular/architecture/native-federation.mdx) handbook.
+
+---
+
+## 10. Troubleshooting & Common Issues
+
+During implementation and production deployment of Module Federation, teams frequently encounter shared module constraints, version conflicts, CORS rejections, or dynamic load failures. 
+
+To explore solutions to these problems and understand when federation can become an engineering anti-pattern, consult our detailed [src/content/docs/angular/architecture/federation-common-issues.mdx](src/content/docs/angular/architecture/federation-common-issues.mdx) guide.
+
+---
+
+## 11. Cross-App Communication Patterns
+
+Decoupled independent frontend applications must communicate with each other dynamically at runtime without invoking tight compiled-time dependencies. To learn how to implement secure Custom Events, Pub/Sub Event Buses using RxJS, shared Signal states, and Routing states, consult our dedicated [src/content/docs/angular/architecture/cross-app-communication.mdx](src/content/docs/angular/architecture/cross-app-communication.mdx) guide.
+
+---
+
+## References
+
+- [Microfrontends with Angular: Multirepo](https://medium.com/@igorm573/microfrontends-with-angular-multirepo-19b3e9ec4945)
+- [Mastering Module Federation - Part 1](https://iamsrijan.medium.com/part-1-why-module-federation-solves-real-problems-and-when-it-doesnt-a6155da2e41e)
+- [Cross-App Communication in Micro Frontends](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
+
