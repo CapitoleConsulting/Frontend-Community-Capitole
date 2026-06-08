@@ -49,6 +49,12 @@
       "points": 10,
       "rank": "Rookie"
     },
+    "jacobo-gonzalez": {
+      "name": "Jacobo Gonzalez Dorta",
+      "githubUsername": "jacobogonzalez",
+      "points": 15,
+      "rank": "Rookie"
+    },
     "juanfrancisco-martin": {
       "name": "Juan Francisco Martin Marcos",
       "points": 15,
@@ -66,6 +72,7 @@
     },
     "hugo-moragues": {
       "name": "Hugo Moragues Valencia",
+      "githubUsername": "hmorv",
       "points": 10,
       "rank": "Rookie"
     },
@@ -81,6 +88,7 @@
     },
     "bryan-condor": {
       "name": "Bryan Kevin Condor",
+      "githubUsername": "vaayroon",
       "points": 5,
       "rank": "Rookie"
     },
@@ -91,6 +99,7 @@
     },
     "simon-hernandez": {
       "name": "Simon Pedro Hernandez Leal",
+      "githubUsername": "simonpedro33",
       "points": 15,
       "rank": "Rookie"
     }
