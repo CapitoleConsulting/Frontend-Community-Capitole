@@ -488,3 +488,9 @@ But for a huge percentage of real applications, Zustand hits the sweet spot: sim
 The important thing is using that simplicity responsibly. Small focused stores, clear actions, selectors for reads, derived values instead of duplicated state, and persistence only where it makes sense.
 
 If I had to start a medium-sized React project today, I'd probably go with **TanStack Query for server state and Zustand for client state**. It's a combination that scales well and lets the team move fast, as long as everyone agrees on where the line between the two sits.
+
+## References
+
+- [Zustand official documentation](https://zustand.docs.pmnd.rs/learn/getting-started/introduction)
+- [More examples](https://github.com/pmndrs/zustand)
+- [Deeper comparison with other alternatives](https://zustand.docs.pmnd.rs/learn/getting-started/comparison)
