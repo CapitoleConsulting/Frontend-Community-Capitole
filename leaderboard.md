@@ -23,4 +23,4 @@
 | 19 | Ernesto Nicolas Rickert | 5 | Rookie |
 | 20 | Bryan Kevin Cóndor Romero | 5 | Rookie |
 
-_Last updated: 2026-06-08T08:12:08.921Z_
+_Last updated: 2026-06-12T07:21:48.546Z_
