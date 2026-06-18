@@ -1,0 +1,636 @@
+---
+title: Clean Architecture
+description: A comprehensive guide to building scalable, decoupled, and maintainable Angular applications through clean architecture principles and patterns.
+---
+
+## Overview
+
+Clean Architecture in front-end development emphasizes creating scalable, agnostic, and decoupled applications that prioritize business logic over framework implementation. Rather than letting frameworks dictate application structure, clean architecture advocates for pushing frameworks to the borders of your application, freeing yourself from unnecessary dependencies and enabling long-term maintainability.
+
+This guide explores how to apply clean architecture principles to Angular applications, drawing from decades of proven architectural patterns while adapting them to the unique challenges of front-end development.
+
+### The Architecture at a Glance
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 Frameworks & Drivers                     │
+│          (Web, DB, Devices, External Interfaces)        │
+├─────────────────────────────────────────────────────────┤
+│             Interface Adapters / Gateways               │
+│      (Controllers, Presenters, Gateways, Repositories)  │
+├─────────────────────────────────────────────────────────┤
+│                  Application Business Rules             │
+│                      (Use Cases)                         │
+├─────────────────────────────────────────────────────────┤
+│                  Enterprise Business Rules              │
+│                      (Entities)                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+Each layer should be independent and only depend on layers deeper toward the center. This dependency inversion principle ensures that core business logic never depends on framework specifics.
+
+### The Layered Architecture Model
+
+The clean architecture follows a concentric ring model:
+
+1. **Entities (Center, Yellow)** — Enterprise business rules that are independent of any framework or specific application
+2. **Use Cases (Red)** — Application-specific business rules that coordinate with entities
+3. **Interface Adapters (Green)** — Controllers, presenters, gateways, and repositories that translate between the use case layer and external systems
+4. **Frameworks & Drivers (Blue, Outermost)** — Web servers, databases, devices, and external interfaces—the "dirty" details that change frequently
+
+**Key Principle**: Control flow moves inward; dependency flow moves inward. Entities know nothing about use cases; use cases know nothing about adapters; adapters know nothing about frameworks. This isolation enables rapid testing, framework replacement, and long-term maintainability.
+
+![The Clean Architecture Diagram - Concentric layers showing Entities at center, Use Cases, Interface Adapters, and Frameworks & Drivers at the outer layer, with flow control and dependencies moving inward](/images/clean-architecture-diagram.png)
+
+## The Clean Architecture Problem
+
+Many front-end developers make the mistake of assuming that a powerful framework is sufficient for application scalability. The question "Which framework is better for scaling?" reveals a fundamental misunderstanding: **scalability is not primarily a framework concern**.
+
+### Core Problems Clean Architecture Solves
+
+Uncle Bob's Clean Architecture addresses timeless software engineering challenges:
+
+- **Tight Coupling**: Code that depends heavily on specific implementations rather than abstractions
+- **Separation of Concerns**: Mixed responsibilities making code hard to test and modify
+- **Framework Dependency**: Applications that cannot exist without their chosen framework
+
+The original Clean Architecture promotes systems that are:
+
+- Independent of frameworks
+- Testable in isolation
+- Independent of the user interface (UI)
+- Independent of the database
+- Independent of any external agency
+
+### The Front-end Context
+
+While the original Clean Architecture was designed for backend systems, the **core principles remain valuable for front-end applications**, provided we adapt them thoughtfully to the browser environment.
+
+A critical insight: **Implementing Clean Architecture within frameworks like React, Angular, or Vue that tightly couple everything within their ecosystems conflicts with the independence principle**. The goal is not to abandon frameworks but to define clear boundaries about where they should operate.
+
+No system achieves 100% decoupling. The objective is to **minimize coupling** to make future changes less painful and less expensive.
+
+## Front-end Fundamentals
+
+Regardless of framework choice, front-end development is fundamentally about four core tasks:
+
+1. **Listening to User Interactions** — Capturing user input and browser events
+2. **Retrieving API Data** — Fetching resources from backend services
+3. **Persisting Application State** — Storing and managing client-side data
+4. **Updating the UI** — Rendering data to the user
+
+While these tasks may occur in varying sequences and with many variations, they form the essence of front-end applications. Clean Architecture structures your codebase around these fundamental operations using four primary abstractions:
+
+- **Entities** — Data models and transformations
+- **Services** — External communication and side effects
+- **Stores** — State management and persistence
+- **Components** — UI presentation and user interaction
+
+## The Four Layers
+
+### 👤 Entities
+
+**Entities represent relevant data used for rendering or updating your application.** They act as adapters, accepting JSON data from APIs and transforming it into a format suitable for your application.
+
+Entities are typically stateless, composable functions that ensure your data follows consistent shapes throughout the application.
+
+#### Example: Product Entity
+
+```typescript
+/**
+ * @Entity Product
+ * Transforms raw API data into application-specific shape
+ */
+export const Product = ({
+  id = Number(-1),
+  title = String('No title'),
+  description = String('No description'),
+  rating = Number(-1),
+  stock = Number(-1),
+  brand = String('No Brand defined'),
+  category = String('No category'),
+  image = String('No url for image'),
+  ...rest
+}) => ({
+  id,
+  title,
+  description,
+  rating,
+  stock,
+  brand,
+  category,
+  price: {
+    ...ProductPrice(rest)
+  }
+})
+
+/**
+ * @Entity ProductPrice
+ * Composes price formatting logic
+ */
+export const ProductPrice = ({
+  price = Number(-1),
+  discountPercentage = String('No discount percentage')
+}) => ({
+  raw: price,
+  discount: discountPercentage,
+  formatted: price.toLocaleString('pt-br', {
+    style: 'currency',
+    currency: 'BRL'
+  })
+})
+```
+
+#### Benefits of Entities
+
+1. **Centralized Data Shape** — All data transformations occur in one place, simplifying debugging
+2. **DRY (Don't Repeat Yourself)** — Eliminates `formatPrice()` helper duplication across components
+3. **Self-Documenting** — The entity structure serves as documentation for your data model
+4. **Composable** — Entities return objects and can be composed with other functions
+5. **Decoupled Components** — Components don't import formatting helpers; they trust entities
+
+### 📞 Services
+
+**Services handle external communication such as API requests (GET, POST, UPDATE, DELETE) and external services like analytics.** They should always return promises of entities and remain stateless.
+
+Services are the single source of truth for HTTP communication, making it trivial to modify, debug, or switch HTTP client implementations.
+
+#### Example: User Service
+
+```typescript
+import http from './http'
+import { User } from '/entities/user'
+
+/**
+ * Fetches a list of users with their associated photos and posts
+ * Demonstrates parallel fetching and entity composition
+ */
+export const getPersonList = async () => {
+  // Parallel fetching for performance
+  const [users, photos, posts] = await Promise.all([
+    http.get('/users'),
+    http.get('/photos'),
+    http.get('/posts')
+  ])
+
+  return users.map((user) => {
+    const photo = photos.find((photo) => photo.id === user.id)
+    const post = posts.find((post) => post.id === user.id)
+    return User({ ...user, photo, post })
+  })
+}
+```
+
+#### Service Rules
+
+1. **Always Return `Promise<Entity> | Promise<Entity[]>`** — Consistent interface for consumers
+2. **Stateless** — Services never persist data; they're pure functions with side effects
+3. **Composable** — Services can call other services and unwrap results
+4. **Wrapped HTTP Client** — Encapsulate implementation (axios, fetch, etc.) for easy switching
+
+#### Benefits of Services
+
+1. **Centralized External Communication** — All API calls in one place
+2. **Composable** — Chain service calls without coupling components
+3. **Testable** — Mock services easily without involving the framework
+4. **Consistent Error Handling** — Manage API errors in one location
+
+### 🕋 Store
+
+**Stores manage client-side data persistence and application state using the Publish & Subscribe pattern.** Unlike services, stores are **stateful** and facilitate communication between components without direct dependencies.
+
+Stores serve two purposes:
+
+1. **Persist application state** — Keep data available across component lifecycles
+2. **Enable component communication** — Decouple components through events
+
+#### Example: Store Implementation
+
+A store manages use cases that transition the application between states:
+
+```typescript
+/**
+ * Store use case: Add item to cart
+ * Demonstrates state management independent of any framework
+ */
+export const addToCart = (state, item) => {
+  return {
+    ...state,
+    cart: [...state.cart, item],
+    total: state.total + item.price
+  }
+}
+
+/**
+ * Store use case: Remove item from cart
+ */
+export const removeFromCart = (state, itemId) => {
+  const item = state.cart.find(item => item.id === itemId)
+  return {
+    ...state,
+    cart: state.cart.filter(item => item.id !== itemId),
+    total: state.total - item.price
+  }
+}
+```
+
+A test for store logic requires no framework:
+
+```typescript
+describe('Cart Store', () => {
+  it('should add item to cart', () => {
+    const initialState = { cart: [], total: 0 }
+    const item = { id: 1, price: 100 }
+    
+    const newState = addToCart(initialState, item)
+    
+    expect(newState.cart).toHaveLength(1)
+    expect(newState.total).toBe(100)
+  })
+})
+```
+
+#### Benefits of Stores
+
+1. **Framework-Independent Testing** — Test all state transitions without any framework
+2. **Use Case Documentation** — Each use case documents a state transition, serving as executable requirements
+3. **Composable** — Stores can use services and coordinate complex flows
+4. **Centralized State Changes** — All mutations occur through defined use cases
+5. **Debugging** — Trace exact state transitions for rapid issue diagnosis
+
+### 🧩 Components
+
+**Components are responsible for UI presentation, user interaction, and view updates while maintaining performance.** They represent the "presentation layer" and are where you use your chosen framework (Angular, React, Svelte, etc.).
+
+The critical insight: **You don't need components for business logic, only for presentation.**
+
+With entities, services, and stores handling all business logic, components become simple, presentational, and framework-agnostic in terms of architecture.
+
+#### Component Responsibilities
+
+- Render UI using framework-specific template syntax
+- Capture user events and delegate to stores/services
+- Subscribe to store state changes
+- Display data provided by entities
+
+#### Benefits
+
+1. **Simplified Testing** — Components test primarily visual behavior; business logic tests are framework-independent
+2. **Reusability** — Presentational components are easy to extract and reuse
+3. **Framework Flexibility** — If you switch frameworks, business logic remains unchanged
+4. **Performance** — Clear component boundaries enable optimization
+
+## Folder Structure
+
+Clean Architecture folders are organized around business features and abstractions rather than technical types.
+
+### Vertical Slice Architecture
+
+Following Vertical Slice Architecture patterns, organize folders around complete features (pages/slices), with each slice containing all necessary abstractions:
+
+```
+src/
+├── pages/
+│   ├── home/
+│   │   ├── services/
+│   │   │   └── homeService.ts
+│   │   ├── entities/
+│   │   │   └── homeEntity.ts
+│   │   ├── stores/
+│   │   │   └── homeStore.ts
+│   │   └── components/
+│   │       ├── hero.component.ts
+│   │       ├── hero.component.html
+│   │       └── hero.component.scss
+│   ├── product-list/
+│   │   ├── services/
+│   │   ├── entities/
+│   │   ├── stores/
+│   │   └── components/
+│   └── product-detail/
+│       ├── services/
+│       ├── entities/
+│       ├── stores/
+│       └── components/
+└── shared/
+    ├── utils/
+    ├── services/
+    ├── entities/
+    ├── stores/
+    └── components/
+```
+
+### Benefits of This Structure
+
+1. **Easy to Navigate** — Discover any feature quickly with predictable folder layout
+2. **Gradual Generalization** — Start with specific features, move abstractions to `shared/` when patterns emerge
+3. **Safe Deletion** — Remove entire pages without dependency hunting; import errors immediately surface any missed dependencies
+
+### Preventing Cross-Feature Coupling
+
+Using this structure naturally prevents dangerous patterns:
+
+```typescript
+// ❌ BAD: Creates cross-feature dependency
+import something from '../../../home/services/homeService.ts'
+
+// ✅ GOOD: Move shared abstractions to shared folder
+import something from '../../../shared/services/commonService.ts'
+```
+
+## Bonus: Framework-Agnostic Design Systems
+
+Design Systems often become unnecessarily coupled with frameworks. Clean architecture demands that design systems remain agnostic.
+
+### Design System Core
+
+A design system should provide:
+
+- **Tokens** — Colors, spacing, typography variables
+- **Fonts** — Global font definitions
+- **Typography** — Font families, sizes, weights, line heights
+- **Colors** — Color palettes and semantic meanings
+- **Atomic Components** — Small, reusable UI building blocks
+
+### Framework Separation
+
+Rather than exporting framework-specific components, export plain CSS:
+
+```typescript
+// ❌ NOT RECOMMENDED
+// @my-design-system/react exports React components
+import { Button } from '@my-design-system/react'
+
+// ✅ RECOMMENDED
+// Design system exports CSS; frameworks handle component wrapping
+import '@my-design-system/styles/button.css'
+```
+
+This approach:
+
+- Maintains design system independence
+- Allows any framework to consume the system
+- Simplifies design system updates
+- Reduces bundle bloat from multiple component implementations
+
+**Example**: [Bootswatch](https://bootswatch.com/cosmo/) demonstrates this pattern effectively—a single page with HTML examples and a CSS CDN link. No framework integration required.
+
+## TypeScript Implementation Strategy
+
+While clean architecture principles are language-agnostic, TypeScript provides powerful mechanisms to enforce clean architecture at the type system level. This section explores how to leverage TypeScript's features for robust clean architecture implementations.
+
+### Entities as Type-Safe Classes
+
+TypeScript's class syntax combined with strict typing enables self-documenting entities:
+
+```typescript
+/**
+ * @Entity User
+ * Represents a user in the system with type safety
+ */
+export class User {
+  constructor(
+    readonly id: string,
+    readonly email: string,
+    readonly password: string
+  ) {}
+
+  /**
+   * Factory method for entity creation
+   * Ensures valid entity state during construction
+   */
+  static create(email: string, password: string): User {
+    const userId = generateUUID()
+    return new User(userId, email, password)
+  }
+}
+```
+
+### Use Cases with Dependency Injection
+
+Use cases orchestrate interactions between entities and interfaces, with TypeScript enforcing dependencies:
+
+```typescript
+/**
+ * Use case: Create User
+ * Demonstrates dependency injection and type safety
+ */
+interface CreateUserRequest {
+  email: string
+  password: string
+}
+
+export class CreateUserUseCase {
+  constructor(private userRepository: UserRepository) {}
+
+  async execute(request: CreateUserRequest): Promise<void> {
+    const user = User.create(request.email, request.password)
+    await this.userRepository.save(user)
+  }
+}
+```
+
+### Repository Interfaces
+
+Define clear contracts between use cases and data access layers:
+
+```typescript
+/**
+ * Repository interface
+ * Acts as a contract for data persistence implementations
+ */
+export interface UserRepository {
+  save(user: User): Promise<void>
+  findById(id: string): Promise<User | null>
+  delete(id: string): Promise<void>
+}
+```
+
+### Framework Implementations
+
+Separate framework-specific code into dedicated folders:
+
+```typescript
+/**
+ * In-Memory Repository Implementation
+ * Used for testing or lightweight scenarios
+ */
+export class InMemoryUserRepository implements UserRepository {
+  private users: Map<string, User> = new Map()
+
+  async save(user: User): Promise<void> {
+    this.users.set(user.id, user)
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.users.get(id) || null
+  }
+
+  async delete(id: string): Promise<void> {
+    this.users.delete(id)
+  }
+}
+```
+
+### TypeScript Project Configuration
+
+Optimize TypeScript for clean architecture:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+### TypeScript-Enforced Folder Structure
+
+A typical TypeScript clean architecture project:
+
+```
+src/
+├── entities/           # Core business logic (User, Product, etc.)
+├── usecases/          # Application-specific business rules
+├── interfaces/        # Contracts for repositories and services
+├── frameworks/        # Framework/driver implementations
+│   ├── repositories/  # Database implementations
+│   ├── controllers/   # HTTP/API handlers
+│   └── services/      # External service integrations
+└── main.ts           # Dependency injection wiring
+```
+
+### Dependency Wiring
+
+The main entry point connects all layers:
+
+```typescript
+/**
+ * Application Factory
+ * Wires entities, use cases, and implementations
+ */
+import { CreateUserUseCase } from './usecases/create-user.usecase'
+import { InMemoryUserRepository } from './frameworks/repositories/in-memory-users.repository'
+
+const userRepository = new InMemoryUserRepository()
+const createUserUseCase = new CreateUserUseCase(userRepository)
+
+// Use case is now ready for execution
+createUserUseCase.execute({
+  email: 'user@example.com',
+  password: 'secure-password'
+})
+  .then(() => console.log('User created'))
+  .catch(error => console.error('Creation failed:', error))
+```
+
+## Advanced Considerations
+
+While clean architecture provides tremendous value, successful implementation requires thoughtful decisions:
+
+### SPA vs. MPA vs. Hybrid
+
+Clean architecture applies regardless of architecture choice:
+
+- **Single Page Application (SPA)** — Entire application in browser
+- **Multi-Page Application (MPA)** — Traditional server-rendered pages
+- **Hybrid/Islands** — Selective client-side interactivity (e.g., Astro Islands)
+
+Choose based on performance and user experience requirements, not framework preferences.
+
+### Rendering Strategies
+
+- **Static Rendering** — Pre-build HTML at compile time
+- **Server-Side Rendering (SSR)** — Render on server per request
+- **Client-Side Rendering (CSR)** — Render in browser
+- **Hybrid Rendering** — Combine strategies per route or component
+
+### Repository Strategy
+
+- **Monorepo** — Single repository with design system, shared utilities, multiple applications
+- **Multi-repo** — Separate repositories with federation or package-based integration
+- **Poly-repo** — Feature-based repositories with careful coordination
+
+Each approach impacts clean architecture implementation differently.
+
+## Framework Agnosticism in Practice
+
+The ultimate test of clean architecture is portability:
+
+### Can You Change Frameworks?
+
+If your business logic requires minimal changes to switch from Angular to React or Vue, your architecture is framework-agnostic. Specifically:
+
+- Entities can be extracted and reused
+- Services work identically
+- Store logic requires no changes
+- Only components need framework-specific rewrites
+
+### Can You Test Without Framework Overhead?
+
+If you can test stores, services, and entities without initializing your framework, your architecture separates concerns effectively.
+
+### Can You Share Code Across Frameworks?
+
+In microfrontend architectures, each federated application can use different frameworks while sharing entities, services, and stores.
+
+## Common Pitfalls
+
+### Over-Engineering
+
+Not every application needs complete clean architecture separation. Start simple and introduce layers as complexity grows.
+
+### Blindly Copying Patterns
+
+Don't transplant backend patterns directly. Adapt them thoughtfully for browser constraints:
+
+- Databases don't exist in the browser; use stores
+- Threading doesn't apply; use async/promises
+- Network calls have latency; implement proper loading states
+
+### Excessive Framework Abstraction
+
+Some frameworks resist clean architecture. If fighting your framework constantly, reconsider its fit for your project.
+
+### Ignoring Performance
+
+Clean architecture doesn't mean ignoring performance. Bundle size, initial load time, and interaction responsiveness matter.
+
+## Conclusion
+
+Clean Architecture in front-end development is not about creating perfect, 100% decoupled systems. Instead, it's about **minimizing coupling enough to make changes affordable**.
+
+The four abstractions—**Entities, Services, Stores, and Components**—provide a mental model that transcends any particular framework. This model enables:
+
+- **Confident refactoring** — Change implementation details without breaking application logic
+- **Framework migration** — Switch technologies without rewriting business logic
+- **Team scaling** — New developers understand architecture quickly
+- **Testing confidence** — Test business logic independent of UI framework
+
+By pushing frameworks to the borders of your application and organizing code around business concerns, you create applications that remain maintainable and scalable for years, regardless of which shiny new framework emerges tomorrow.
+
+The craftsmanship required to make these architectural decisions deliberately—weighing trade-offs and understanding your specific context—takes thoughtful effort. But the rewards of decoupling, particularly from framework dependencies, become evident remarkably quickly.
+
+---
+
+## References
+
+- **Eduardo Ottaviani Aragão** — [A Definitive Guide to Front-end Clean Architecture — Second Edition](https://eduardo-ottaviani.medium.com/a-definitive-guide-to-front-end-clean-architecture-3a62418becb4). A comprehensive guide emphasizing framework agnosticism and practical decoupling strategies.
+- **Davi Orlandi** — [Implementing Clean Architecture with TypeScript](https://dev.to/dvorlandi/implementing-clean-architecture-with-typescript-3jpc). Practical TypeScript implementation patterns including entities, use cases, interfaces, repositories, and dependency injection wiring.
+- **Uncle Bob (Robert Martin)** — [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html). The original clean architecture principles and motivations.
+- **Uncle Bob (Robert Martin)** — [The Principles of Clean Architecture](https://www.youtube.com/watch?v=o_TH-Y78tt4). Video explaining the core motivation behind clean architecture.
+- **Jimmy Bogard** — [Vertical Slice Architecture](https://www.jimmybogard.com/vertical-slice-architecture/). Feature-based architectural organization pattern.
+- **Bootswatch** — [CSS Design System Example](https://bootswatch.com/cosmo/). Demonstrates framework-agnostic design system CSS distribution pattern.

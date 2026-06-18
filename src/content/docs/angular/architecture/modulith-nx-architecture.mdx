@@ -1,0 +1,512 @@
+---
+title: Modulith Architecture with Nx
+description: Building scalable Angular applications using the Modulith pattern with Nx monorepos for enforced architectural boundaries, dependency management, and team scalability.
+---
+
+# Modulith Architecture with Nx: Beyond Clean Code
+
+:::tip
+Before diving into Modulith architecture, familiarize yourself with [Clean Architecture principles](../clean-architecture/) that form the foundation for module design and isolation.
+:::
+
+## What is a Modulith?
+
+The term **Modulith** combines "Modular" and "Monolith"—a single deployable frontend application whose internal architecture is structured like microservices. Unlike traditional monoliths plagued by tight coupling and circular dependencies, a Modulith enforces strict boundaries, clear domain divisions, and explicit module isolation.
+
+### Key Characteristics
+
+| Aspect | Monolith | Modulith | Microservices |
+|--------|----------|----------|---------------|
+| **Deployment** | Single unit | Single unit | Separate deployments |
+| **Structure** | Chaotic, unorganized | Highly modular, enforced | Clear service boundaries |
+| **Dependencies** | Circular, tight coupling | Unidirectional flow | Decoupled communication |
+| **Operational Overhead** | Low | Low | High (complex inter-service) |
+| **Code Sharing** | Easy but risky | Safe and structured | Difficult, versioned |
+| **Scalability** | Team-dependent | Excellent with Nx | Maximum isolation |
+
+A Modulith is **not** a "big ball of mud"—it's a disciplined architectural approach where:
+- Every module has a **clear domain** and explicit boundaries
+- Internal libraries are treated like **NPM packages**
+- Dependency flows follow **strict rules**
+- Architecture is **enforced by tooling**, not convention
+
+---
+
+## The Clean Code Paradox
+
+Clean code is a necessary but insufficient condition for scalable architecture. In enterprise applications, the challenge shifts from "How do I write a good function?" to **"Where does this function belong?"**
+
+### Why Clean Code Alone Isn't Enough
+
+#### Circular Dependencies
+When a service in the Products feature imports from the Users feature, and Users later imports back from Products, you've created a **closed loop**. Features become tightly coupled and cannot be changed or tested independently. Any modification risks cascading failures throughout the codebase.
+
+```typescript
+// libs/products/src/services/product.service.ts
+import { UserService } from '@app/users';  // Products depends on Users
+
+// libs/users/src/services/user.service.ts
+import { ProductService } from '@app/products';  // Users depends back on Products
+```
+
+#### The Code Review Problem
+Code reviewers focus on visible issues: syntax, potential bugs, memory leaks. But **architectural flaws** like circular dependencies or inverted dependency flows are invisible to the human eye and easily missed under deadline pressure.
+
+The solution is clear: **If a rule can be automated, it must be automated.**
+
+Manual enforcement of architectural rules drains developer time and cognitive load. Automation handles structural validation instantly and consistently, freeing reviewers to focus on business logic and critical decisions.
+
+#### The Folder Structure Myth
+A clean folder structure is essential but insufficient. This common layout looks organized:
+
+```
+src/app/
+├── core/
+│   ├── guards/
+│   ├── interceptors/
+│   └── services/
+├── shared/
+│   ├── pipes/
+│   ├── utils/
+│   └── components/
+└── features/
+    ├── products/
+    │   ├── state/
+    │   ├── components/
+    │   ├── services/
+    │   ├── models/
+    │   └── products.component.ts
+    └── users/
+        └── ...
+```
+
+However, **this structure provides zero guarantee that dependencies flow in the right direction.** A component in `shared/` can freely import from `features/products/`, violating the layered architecture model.
+
+---
+
+## Nx Boundaries: From Suggestions to Enforcement
+
+Nx transforms architectural guidelines from soft conventions into **hard, automated rules** through tags and linting constraints.
+
+### Tags and Lint Rules
+
+Tag your libraries with both **type** and **scope** dimensions:
+
+```json
+{
+  "name": "products-feature",
+  "tags": ["scope:products", "type:feature"]
+}
+
+{
+  "name": "shared-ui",
+  "tags": ["scope:shared", "type:ui"]
+}
+```
+
+Then define strict boundary rules in `.eslintrc.json`:
+
+```json
+{
+  "@nx/enforce-module-boundaries": [
+    "error",
+    {
+      "depConstraints": [
+        {
+          "sourceTag": "scope:products",
+          "onlyDependOnLibsWithTags": ["scope:products", "scope:shared"]
+        },
+        {
+          "sourceTag": "scope:orders",
+          "onlyDependOnLibsWithTags": ["scope:orders", "scope:shared"]
+        },
+        {
+          "sourceTag": "type:feature",
+          "onlyDependOnLibsWithTags": ["type:feature", "type:ui", "type:data-access", "type:utility"]
+        },
+        {
+          "sourceTag": "type:ui",
+          "onlyDependOnLibsWithTags": ["type:ui", "type:utility"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Result:** If a developer tries to import a feature library into a UI library, the linter **immediately fails** during the local development or CI pipeline. The violation is caught at lint time, not discovered during code review.
+
+### Preventing Inverted Dependency Flows
+
+By enforcing type-based boundaries, you prevent architectural violations:
+
+```typescript
+// ✅ ALLOWED: feature → ui
+// libs/products/feature/src/lib/product-list.component.ts
+import { ProductCardComponent } from '@app/products/ui';
+
+// ❌ BLOCKED BY LINTER: ui → feature
+import { ProductsState } from '@app/products/feature';
+```
+
+Multiple teams can work in parallel without stepping on each other's toes. Team A owns `scope:products`, Team B owns `scope:orders`. Their work is isolated **by design**, enforced by the linter.
+
+---
+
+## Organizing Libraries by Type and Scope
+
+An Angular Modulith with Nx works best when libraries follow a **consistent structure organized by scope and type**. Every library has a **single responsibility**. There are four standard types:
+
+### 1. data-access
+**Purpose:** All state management and API communication.
+
+This layer owns NGXS state slices, HTTP service calls, selectors, and effects. **Nothing outside this layer should know how data is fetched or mutated.**
+
+```typescript
+// libs/products/data-access/src/lib/products.state.ts
+export interface ProductsStateModel {
+  products: Product[];
+  loading: boolean;
+  selectedProductId: number | null;
+}
+
+@State<ProductsStateModel>({
+  name: 'products',
+  defaults: { products: [], loading: false, selectedProductId: null }
+})
+@Injectable()
+export class ProductsState {
+  @Action(LoadProducts)
+  loadProducts(ctx: StateContext<ProductsStateModel>) {
+    ctx.patchState({ loading: true });
+    return this.productsService.getAll().pipe(
+      tap(products => ctx.patchState({ products, loading: false }))
+    );
+  }
+
+  @Selector()
+  static getProducts(state: ProductsStateModel) {
+    return state.products;
+  }
+}
+```
+
+### 2. ui
+**Purpose:** Pure, presentational components only.
+
+UI components receive data via `@Input()` and communicate back via `@Output()`. They have **zero knowledge** of application state, routing, or business logic. This makes them trivial to reuse and test.
+
+```typescript
+// libs/products/ui/src/lib/product-card.component.ts
+import { Component, input, output } from '@angular/core';
+import { Product } from '@app/products/model';
+
+@Component({
+  selector: 'app-product-card',
+  template: `
+    <div class="card">
+      <h3>{{ product().name }}</h3>
+      <p>{{ product().price | currency }}</p>
+      <button (click)="addToCart.emit(product())">Add to Cart</button>
+    </div>
+  `,
+  standalone: true
+})
+export class ProductCardComponent {
+  product = input.required<Product>();
+  addToCart = output<Product>();
+}
+```
+
+### 3. feature
+**Purpose:** Vertical slices owning a business domain.
+
+Feature libraries orchestrate data and UI, inject data-access state slices, handle user interactions, and manage flows. They are the entry points for routed pages.
+
+```typescript
+// libs/products/feature/src/lib/product-list.component.ts
+import { Component, inject } from '@angular/core';
+import { ProductsState } from '@app/products/data-access';
+import { ProductCardComponent } from '@app/products/ui';
+
+@Component({
+  selector: 'app-product-list',
+  template: `
+    <div>
+      <h2>Products</h2>
+      <app-product-card
+        *ngFor="let product of (state.getProducts$ | async)"
+        [product]="product"
+        (addToCart)="onAddToCart($event)"
+      ></app-product-card>
+    </div>
+  `,
+  standalone: true,
+  imports: [ProductCardComponent, CommonModule]
+})
+export class ProductListComponent {
+  readonly state = inject(ProductsState);
+
+  onAddToCart(product: Product) {}
+}
+```
+
+### 4. utility
+**Purpose:** Stateless, pure functions.
+
+Utility libraries contain data formatters, validators, custom RxJS operators, and helper functions—your reusable toolbox.
+
+```typescript
+// libs/shared/utility/src/lib/currency.formatter.ts
+export function formatCurrency(amount: number, locale: string = 'en-US'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+}
+
+export const productNameValidator = (control: AbstractControl): ValidationErrors | null => {
+  if (!control.value) return null;
+  return control.value.length >= 3 ? null : { minLength: true };
+};
+```
+
+### The Dependency Flow
+
+The result is a **unidirectional dependency graph** that never reverses:
+
+```
+feature  →  data-access
+feature  →  ui
+feature  →  utility
+ui       →  utility
+```
+
+This graph is enforced by Nx boundaries and **can never be compromised**—regardless of team size, project age, or deadline pressure.
+
+---
+
+## Folder Structure in Nx
+
+Organize your monorepo with clear scope boundaries:
+
+```
+libs/
+├── products/
+│   ├── data-access/        // State, HTTP services
+│   │   └── src/lib/
+│   │       ├── index.ts
+│   │       └── products.state.ts
+│   ├── ui/                 // Presentational components
+│   │   └── src/lib/
+│   │       ├── index.ts
+│   │       └── product-card.component.ts
+│   ├── feature/            // Smart components, orchestration
+│   │   └── src/lib/
+│   │       ├── index.ts
+│   │       └── product-list.component.ts
+│   └── project.json        // Tags: scope:products, type:feature/ui/data-access
+│
+├── orders/
+│   ├── data-access/
+│   ├── ui/
+│   ├── feature/
+│   └── project.json
+│
+├── shared/
+│   ├── ui/                 // Shared UI components
+│   │   ├── src/lib/
+│   │   └── project.json    // Tags: scope:shared, type:ui
+│   ├── utility/            // Shared formatters, validators
+│   │   ├── src/lib/
+│   │   └── project.json    // Tags: scope:shared, type:utility
+│   └── model/              // Domain models, interfaces
+│       ├── src/lib/
+│       └── project.json    // Tags: scope:shared, type:model
+│
+└── core/
+    ├── http/               // HTTP client, interceptors
+    ├── auth/               // Authentication guards, services
+    └── project.json        // Tags: scope:core, type:utility
+```
+
+---
+
+## The ROI of Quality and Developer Experience
+
+### Nx Computation Caching
+
+Nx caches the output of every task—builds, tests, linting. If new changes don't affect a library, Nx pulls the cached result in milliseconds instead of re-executing:
+
+```bash
+nx run-many --target=test --all
+# Only re-runs tests for affected libraries
+# Everything else? Cache hit ✓  — instant.
+```
+
+On large monorepos, this can shrink CI time from 20+ minutes to under 2 minutes.
+
+### Reduced Cognitive Load
+
+With clearly defined library types and scopes:
+- Developers always know exactly where to look and where to add new code
+- New team members don't spend hours understanding the structure—it's self-documented
+- The library name reveals the scope, the type reveals the responsibility
+
+### Multiple Teams, Zero Conflicts
+
+Since library boundaries are set and enforced:
+- Team A owns `scope:products`
+- Team B owns `scope:orders`
+- Their work is **isolated by design**
+
+Teams can parallelize work without coordination overhead or merge conflicts.
+
+### Long-Term Cost Advantage
+
+The real cost is not the time it takes to set up the structure—it's the time spent without it:
+- Slower onboarding
+- Longer CI pipelines
+- Code reviews that miss architectural flaws
+- Refactoring nightmares as the codebase matures
+
+Good architecture is **not a luxury**; it's a decision that becomes increasingly valuable as the project grows.
+
+---
+
+## Best Practices and Patterns
+
+### 1. Strict Barrel Exports
+Use `index.ts` files to export only the public API of each library:
+
+```typescript
+// libs/products/data-access/src/index.ts
+export * from './lib/products.state';
+export * from './lib/products.selectors';
+
+// Explicitly prevent internal exports
+// DON'T export: './lib/internal-helper.ts'
+```
+
+### 2. Shared Models in a Dedicated Library
+Create a separate `model` library for domain interfaces to avoid circular dependencies:
+
+```typescript
+// libs/products/model/src/lib/product.ts
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+
+// data-access imports from model, not the reverse
+// libs/products/data-access/src/lib/products.state.ts
+import { Product } from '@app/products/model';
+```
+
+### 3. Feature Entry Points
+Route to feature libraries, not directly to components:
+
+```typescript
+// apps/shell/src/app/app.routes.ts
+export const appRoutes: Routes = [
+  {
+    path: 'products',
+    loadChildren: () => import('@app/products/feature').then(m => m.PRODUCTS_ROUTES)
+  }
+];
+
+export const PRODUCTS_ROUTES: Routes = [
+  {
+    path: '',
+    component: ProductListComponent
+  },
+  {
+    path: ':id',
+    component: ProductDetailComponent
+  }
+];
+```
+
+### 4. Environment-Specific Configuration
+Use Angular's environment files or providers for environment variables:
+
+```typescript
+// libs/core/http/src/lib/api.interceptor.ts
+export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
+
+@Injectable()
+export class ApiInterceptor implements HttpInterceptor {
+  constructor(@Inject(API_BASE_URL) private apiBaseUrl: string) {}
+}
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    { provide: API_BASE_URL, useValue: environment.apiUrl }
+  ]
+});
+```
+
+---
+
+## Scaling with Modulith
+
+### Adding a New Feature
+
+1. **Generate the feature scaffold:**
+   ```bash
+   nx g @nx/angular:lib features/invoices/data-access --prefix=inv
+   nx g @nx/angular:lib features/invoices/ui
+   nx g @nx/angular:lib features/invoices/feature
+   ```
+
+2. **Tag the libraries in `project.json`:**
+   ```json
+   {
+     "tags": ["scope:invoices", "type:data-access"]
+   }
+   ```
+
+3. **Add boundary rules** to `.eslintrc.json` (if needed)
+
+4. **Export from the feature barrel** and route from the shell
+
+The structure is self-evident; onboarding is instant.
+
+### Sharing Code Across Scopes
+
+Use `scope:shared` libraries as a "common" namespace:
+
+```typescript
+// ✅ GOOD: products-feature depends on shared-ui
+// libs/products/feature/src/lib/product-list.component.ts
+import { SharedButtonComponent } from '@app/shared/ui';
+
+// ❌ BAD: shared-ui depends on products-feature
+// This violates the architecture and Nx will flag it
+```
+
+---
+
+## Conclusion
+
+Being a Senior Developer or Architect means thinking about the system as a whole, not just the function in front of you. Clean code still matters—it's a local concern that prevents bugs and improves readability. **But clean code alone won't save you from architectural chaos.**
+
+The Modulith approach with Nx boundaries, library types, and enforced dependency flows creates an application that scales across multiple teams for years:
+
+✅ **Automated enforcement** of architectural rules  
+✅ **Clear module boundaries** that grow with your team  
+✅ **Reduced cognitive load** through self-documenting structure  
+✅ **Faster CI pipelines** via computation caching  
+✅ **Zero conflicts** between parallel teams  
+
+This is the foundation of scalable Angular architecture.
+
+---
+
+## References
+
+- **Fanis Prodromou** – [Beyond Clean Code: Building a Scalable Angular Frontend Architecture with Nx Monorepos](https://angular.love/beyond-clean-code-building-a-scalable-angular-frontend-architecture-with-nx-monorepos) – Angular.love
+- **Manfred Steyer** – [Scalable Architecture: Modern Reactivity](https://houseofangular.io/scalable-architecture-modern-reactivity/) – House of Angular
+- **Eduardo Ottaviani Aragão** – [A Definitive Guide to Front-end Clean Architecture — Second Edition](../clean-architecture/) – Clean Architecture Patterns and Principles
+- **Angular Documentation** – [Standalone Components](https://angular.io/guide/standalone-components) – Angular.dev
