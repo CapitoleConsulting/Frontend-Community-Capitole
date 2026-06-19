@@ -7,6 +7,10 @@ description: Implementation guide, fundamental concepts, and best practices for 
 
 This guide covers the core architectural concepts, benefits, codebase organization patterns, and the practical implementation of **Microfrontends (MFE)** using **Webpack Module Federation** within Angular multi-repository setups.
 
+:::tip
+Each microfrontend should apply [Clean Architecture principles](../clean-architecture/) within its boundaries to maintain internal decoupling and enable long-term maintainability across independent teams.
+:::
+
 ---
 
 ## 1. What are Microfrontends?
@@ -332,7 +336,7 @@ By adhering to this framework, we secure optimal performance, zero pipeline over
 
 For modern Angular applications using versions 17, 18 or 19 with the ultra-fast **esbuild** compiler, traditional Webpack-based Module Federation can be replaced with **Native Federation**. 
 
-For a complete, dedicated guide on implementing this modern esbuild and Vite-compatible architecture, please refer to our standalone [src/content/docs/angular/architecture/native-federation.mdx](src/content/docs/angular/architecture/native-federation.mdx) handbook.
+For a complete, dedicated guide on implementing this modern esbuild and Vite-compatible architecture, please refer to our standalone [Native Federation](native-federation/) handbook.
 
 ---
 
@@ -340,13 +344,19 @@ For a complete, dedicated guide on implementing this modern esbuild and Vite-com
 
 During implementation and production deployment of Module Federation, teams frequently encounter shared module constraints, version conflicts, CORS rejections, or dynamic load failures. 
 
-To explore solutions to these problems and understand when federation can become an engineering anti-pattern, consult our detailed [src/content/docs/angular/architecture/federation-common-issues.mdx](src/content/docs/angular/architecture/federation-common-issues.mdx) guide.
+To explore solutions to these problems and understand when federation can become an engineering anti-pattern, consult our detailed [Federation Common Issues & Trade-offs](federation-common-issues/) guide.
 
 ---
 
 ## 11. Cross-App Communication Patterns
 
-Decoupled independent frontend applications must communicate with each other dynamically at runtime without invoking tight compiled-time dependencies. To learn how to implement secure Custom Events, Pub/Sub Event Buses using RxJS, shared Signal states, and Routing states, consult our dedicated [src/content/docs/angular/architecture/cross-app-communication.mdx](src/content/docs/angular/architecture/cross-app-communication.mdx) guide.
+Decoupled independent frontend applications must communicate with each other dynamically at runtime without invoking tight compiled-time dependencies. To learn how to implement secure Custom Events, Pub/Sub Event Buses using RxJS, shared Signal states, and Routing states, consult our dedicated [Cross-App Communication](cross-app-communication/) guide.
+
+---
+
+## 12. Architectural Patterns: Modulith with Nx
+
+Beyond the mechanics of federation itself, building a **scalable, sustainable architecture** requires enforced boundaries, clear library organization, and automated architectural rules. For teams adopting Nx monorepos or planning enterprise-scale applications, discover the **Modulith pattern**, dependency flow enforcement, library types, and team scalability strategies in our [Modulith Architecture with Nx](modulith-nx-architecture/) guide.
 
 ---
 
@@ -355,4 +365,5 @@ Decoupled independent frontend applications must communicate with each other dyn
 - [Microfrontends with Angular: Multirepo](https://medium.com/@igorm573/microfrontends-with-angular-multirepo-19b3e9ec4945)
 - [Mastering Module Federation - Part 1](https://iamsrijan.medium.com/part-1-why-module-federation-solves-real-problems-and-when-it-doesnt-a6155da2e41e)
 - [Cross-App Communication in Micro Frontends](https://medium.com/@vasanthancomrads/cross-app-communication-in-micro-frontends-a329e1ed7ae5)
+- [Fanis Prodromou - Beyond Clean Code: Building a Scalable Angular Frontend Architecture with Nx Monorepos](https://angular.love/beyond-clean-code-building-a-scalable-angular-frontend-architecture-with-nx-monorepos)
 
