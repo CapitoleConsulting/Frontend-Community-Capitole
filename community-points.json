@@ -11,7 +11,7 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 125,
+      "points": 225,
       "rank": "Contributor",
       "name": "Juan Angel Garcia Jimenez"
     },
@@ -241,6 +241,20 @@
       ],
       "points": 60,
       "date": "2026-06-08T08:12:08.920Z"
+    },
+    {
+      "prNumber": "43",
+      "prTitle": "docs(architecture): add TypeScript implementation patterns and visual…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/43",
+      "author": "angellogar",
+      "labels": [
+        "points:guide-pattern",
+        "bonus:multi-framework",
+        "bonus:community-used",
+        "bonus:streak-3weeks"
+      ],
+      "points": 100,
+      "date": "2026-06-19T14:13:38.447Z"
     }
   ]
 }

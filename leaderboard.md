@@ -3,8 +3,8 @@
 | Position | User | Points | Rank |
 |---:|---|---:|---|
 | 1 | Isaac García | 365 | Advanced Contributor |
-| 2 | Nadia Ujovich | 160 | Contributor |
-| 3 | Juan Angel Garcia Jimenez | 125 | Contributor |
+| 2 | Juan Angel Garcia Jimenez | 225 | Contributor |
+| 3 | Nadia Ujovich | 160 | Contributor |
 | 4 | Manuel Lopez Camarena | 35 | Rookie |
 | 5 | Luis Miguel García Palomares | 20 | Rookie |
 | 6 | Alexis Valdez | 20 | Rookie |
@@ -23,4 +23,4 @@
 | 19 | Ernesto Nicolas Rickert | 5 | Rookie |
 | 20 | Bryan Kevin Cóndor Romero | 5 | Rookie |
 
-_Last updated: 2026-06-12T07:21:48.546Z_
+_Last updated: 2026-06-19T14:13:38.448Z_
