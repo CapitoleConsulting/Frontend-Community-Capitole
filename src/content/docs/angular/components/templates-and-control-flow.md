@@ -116,5 +116,5 @@ Example using implicit variables:
 
 ## References
 
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
 - [Angular Official Documentation — Control Flow](https://angular.dev/guide/templates/control-flow)

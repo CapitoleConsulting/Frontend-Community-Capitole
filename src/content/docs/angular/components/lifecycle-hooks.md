@@ -37,7 +37,6 @@ export class UserCardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log('Component initialized!');
 
-    // Modern cleanup pattern using DestroyRef
     this.destroyRef.onDestroy(() => {
       console.log('Cleaning up resources...');
     });
@@ -92,12 +91,10 @@ import { Component, afterNextRender, afterRender, ElementRef } from '@angular/co
 })
 export class ChartComponent {
   constructor() {
-    // Runs once after the first render
     afterNextRender(() => {
       console.log('First render complete — initialize chart library here');
     });
 
-    // Runs after every render cycle
     afterRender(() => {
       console.log('Re-render complete');
     });
@@ -139,5 +136,5 @@ constructor()
 
 ## References
 
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
 - [Angular Official Documentation — Lifecycle](https://angular.dev/guide/components/lifecycle)

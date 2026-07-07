@@ -24,13 +24,8 @@ import { Component, input } from '@angular/core';
   `
 })
 export class UserCardComponent {
-  /** User display name */
   name = input.required<string>();
-
-  /** User email address */
   email = input<string>('');
-
-  /** Whether to show the avatar */
   showAvatar = input<boolean>(false);
 }
 ```
@@ -64,12 +59,8 @@ import { Component, input, booleanAttribute, numberAttribute } from '@angular/co
   template: `<span>Page {{ page() }} of {{ total() }}</span>`
 })
 export class PaginatorComponent {
-  /** Converts string "true"/"false" to boolean */
   disabled = input(false, { transform: booleanAttribute });
-
-  /** Converts string numbers to actual numbers */
   page = input(1, { transform: numberAttribute });
-
   total = input.required<number>();
 }
 ```
@@ -109,8 +100,6 @@ import { Component, output } from '@angular/core';
 })
 export class UserCardComponent {
   name = input.required<string>();
-
-  /** Emitted when the user clicks the delete button */
   deleted = output<string>();
 
   onDelete(): void {
@@ -170,7 +159,6 @@ import { Component, model } from '@angular/core';
   `
 })
 export class ToggleComponent {
-  /** Two-way bound active state */
   isActive = model<boolean>(false);
 
   toggle(): void {
@@ -200,6 +188,6 @@ In the parent — use the banana-in-a-box syntax:
 
 ## References
 
-- [How to Build Your Own Angular Components: From Beginner to Advanced](https://medium.com/@n.wocke/how-to-build-your-own-angular-components-from-beginner-to-advanced-974fa8784383) — Niklas Wockenfuß (2025)
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
+- [How to Build Your Own Angular Components: From Beginner to Advanced](https://medium.com/@n.wocke/how-to-build-your-own-angular-components-from-beginner-to-advanced-974fa8784383)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
 - [Angular Official Documentation — Components](https://angular.dev/guide/components)

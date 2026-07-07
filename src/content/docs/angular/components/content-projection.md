@@ -115,5 +115,5 @@ export class ExpandablePanelComponent {
 
 ## References
 
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
 - [Angular Official Documentation — Content Projection](https://angular.dev/guide/components/content-projection)

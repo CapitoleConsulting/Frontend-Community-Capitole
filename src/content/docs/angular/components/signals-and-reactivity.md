@@ -22,14 +22,11 @@ import { Component, signal, computed, effect } from '@angular/core';
   `
 })
 export class CounterComponent {
-  /** Current counter value */
   count = signal(0);
 
-  /** Derived value — automatically updates when count changes */
   double = computed(() => this.count() * 2);
 
   constructor() {
-    // Side effect that runs when count changes
     effect(() => {
       console.log(`Count changed to: ${this.count()}`);
     });
@@ -120,9 +117,7 @@ import { TabComponent } from './tab.component';
 export class TabsComponent {
   tabs = contentChildren(TabComponent);
 
-  selectTab(tab: TabComponent): void {
-    // Handle tab selection
-  }
+  selectTab(tab: TabComponent): void {}
 }
 ```
 
@@ -171,6 +166,6 @@ export class UserCardComponent {
 
 ## References
 
-- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d) — Antony Andrus (2025)
+- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d)
 - [Angular Signals Guide](https://angular.dev/guide/signals)
 - [Angular Official Documentation — Components](https://angular.dev/guide/components)

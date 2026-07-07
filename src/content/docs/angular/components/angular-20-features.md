@@ -18,7 +18,6 @@ Angular 20 represents a paradigm shift in how we architect applications. The com
 In Angular 20, standalone components are the **only** way to create new components via the CLI. The `standalone: true` flag is implicit and no longer appears in the decorator. If you need a module-based component (rare), you must explicitly opt out with `standalone: false`.
 
 ```ts
-// Angular 20 — no standalone flag needed
 import { Component, input, output, signal } from '@angular/core';
 
 @Component({
@@ -84,12 +83,10 @@ import { Component, input, output, model, computed } from '@angular/core';
   `
 })
 export class QuantitySelectorComponent {
-  /** Two-way bound quantity */
   quantity = model.required<number>();
   max = input<number>(99);
   min = input<number>(1);
 
-  /** Emitted when the quantity changes */
   quantityChanged = output<number>();
 
   isMin = computed(() => this.quantity() <= this.min());
@@ -112,7 +109,6 @@ export class QuantitySelectorComponent {
 Angular 20 stabilizes **zoneless mode**, eliminating `zone.js` entirely for smaller bundles and faster startup:
 
 ```ts
-// app.config.ts
 import { ApplicationConfig, provideExperimentalZonelessChangeDetection } from '@angular/core';
 
 export const appConfig: ApplicationConfig = {
@@ -287,7 +283,7 @@ export class ProductCatalogComponent {
 
 ## References
 
-- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec) — Mayur Chakalasiya (2025)
-- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d) — Antony Andrus (2025)
+- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec)
+- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d)
 - [Angular Official Documentation — Components](https://angular.dev/guide/components)
 - [Angular Signals Guide](https://angular.dev/guide/signals)

@@ -43,11 +43,9 @@ export class HostComponent {
       environmentInjector: this.envInjector
     });
 
-    // Pass inputs — type-safe
     ref.setInput('title', 'Delete file?');
     ref.setInput('message', 'This action cannot be undone.');
 
-    // Wire outputs
     ref.instance.confirmed.subscribe(() => {
       console.log('Confirmed!');
       ref.destroy();
@@ -208,6 +206,6 @@ Place a single `<ng-template #modalHost>` in your root layout and call `modalSer
 
 ## References
 
-- [How to Create Components Dynamically in Angular — 2026 Guide](https://acharyaks90.medium.com/how-to-create-components-dynamically-in-angular-2026-guide-975745090eef) — Anil Kumar (2026)
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
+- [How to Create Components Dynamically in Angular — 2026 Guide](https://acharyaks90.medium.com/how-to-create-components-dynamically-in-angular-2026-guide-975745090eef)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
 - [Angular Official Documentation — Dynamic Components](https://angular.dev/guide/components/programmatic-rendering)

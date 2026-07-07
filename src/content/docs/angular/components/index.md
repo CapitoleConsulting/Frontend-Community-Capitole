@@ -61,12 +61,12 @@ Components are the fundamental building blocks of Angular applications. Each com
 
 ## References
 
-- [How to Build Your Own Angular Components: From Beginner to Advanced](https://medium.com/@n.wocke/how-to-build-your-own-angular-components-from-beginner-to-advanced-974fa8784383) — Niklas Wockenfuß (2025)
-- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce) — Gitesh Mahadik (2025)
-- [How to Create Components Dynamically in Angular — 2026 Guide](https://acharyaks90.medium.com/how-to-create-components-dynamically-in-angular-2026-guide-975745090eef) — Anil Kumar (2026)
-- [Angular Standalone Components vs Modules](https://medium.com/@jaouadirabeb/angular-standalone-components-vs-modules-851fc2819b03) — Jaouadirabeb (2025)
-- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec) — Mayur Chakalasiya (2025)
-- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d) — Antony Andrus (2025)
+- [How to Build Your Own Angular Components: From Beginner to Advanced](https://medium.com/@n.wocke/how-to-build-your-own-angular-components-from-beginner-to-advanced-974fa8784383)
+- [Mastering Angular Components in 2025](https://medium.com/@gitesh08/mastering-angular-components-in-2025-01a8bdf4e0ce)
+- [How to Create Components Dynamically in Angular — 2026 Guide](https://acharyaks90.medium.com/how-to-create-components-dynamically-in-angular-2026-guide-975745090eef)
+- [Angular Standalone Components vs Modules](https://medium.com/@jaouadirabeb/angular-standalone-components-vs-modules-851fc2819b03)
+- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec)
+- [The Power of Standalone Components and Signals in Angular 20](https://medium.com/@antonyandrus/the-power-of-standalone-components-and-signals-in-angular-20-c2fa6c5dca3d)
 - [Angular Official Documentation — Components](https://angular.dev/guide/components)
 - [Angular Signals Guide](https://angular.dev/guide/signals)
 - [Angular Migration to Standalone](https://angular.dev/reference/migrations/standalone)

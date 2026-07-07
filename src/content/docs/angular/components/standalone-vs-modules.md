@@ -18,7 +18,6 @@ Since Angular 14, **standalone components** have simplified this model. From Ang
 In the traditional approach, the application was organized through `@NgModule` classes:
 
 ```ts
-// app.module.ts (legacy approach)
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
@@ -37,7 +36,6 @@ export class AppModule {}
 **Bootstrapping with modules:**
 
 ```ts
-// main.ts (legacy)
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 
@@ -59,13 +57,12 @@ platformBrowserDynamic().bootstrapModule(AppModule);
 With standalone components, each component is **self-contained** — it imports what it needs directly:
 
 ```ts
-// user-card.component.ts (modern approach)
 import { Component, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-user-card',
-  imports: [DatePipe],  // Import dependencies directly
+  imports: [DatePipe],
   template: `
     <div class="card">
       <h3>{{ name() }}</h3>
@@ -82,7 +79,6 @@ export class UserCardComponent {
 **Bootstrapping without modules:**
 
 ```ts
-// main.ts (modern)
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
@@ -91,7 +87,6 @@ bootstrapApplication(AppComponent, appConfig);
 ```
 
 ```ts
-// app.config.ts
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -173,7 +168,6 @@ Modules haven't disappeared — they remain useful in specific scenarios:
 Angular allows seamless interoperability between standalone and module-based components:
 
 ```ts
-// A standalone component importing a module
 @Component({
   selector: 'app-dashboard',
   imports: [MatCardModule, MatButtonModule, UserCardComponent],
@@ -190,10 +184,9 @@ export class DashboardComponent {
 ```
 
 ```ts
-// A module declaring a legacy component and importing a standalone one
 @NgModule({
   declarations: [LegacyWidgetComponent],
-  imports: [CommonModule, UserCardComponent],  // Standalone components can be imported directly
+  imports: [CommonModule, UserCardComponent],
   exports: [LegacyWidgetComponent]
 })
 export class WidgetsModule {}
@@ -220,6 +213,6 @@ If you're working on an existing module-based project, consider migrating increm
 
 ## References
 
-- [Angular Standalone Components vs Modules](https://medium.com/@jaouadirabeb/angular-standalone-components-vs-modules-851fc2819b03) — Jaouadirabeb (2025)
-- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec) — Mayur Chakalasiya (2025)
+- [Angular Standalone Components vs Modules](https://medium.com/@jaouadirabeb/angular-standalone-components-vs-modules-851fc2819b03)
+- [Angular Standalone Components: Simplifying Modern Angular Development](https://medium.com/@mayurchakalasiya1990/angular-standalone-components-simplifying-modern-angular-development-b65c87ae81ec)
 - [Angular Migration to Standalone](https://angular.dev/reference/migrations/standalone)
