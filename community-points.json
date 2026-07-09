@@ -11,8 +11,8 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 225,
-      "rank": "Contributor",
+      "points": 310,
+      "rank": "Advanced Contributor",
       "name": "Juan Angel Garcia Jimenez"
     },
     "hndcore": {
@@ -255,6 +255,21 @@
       ],
       "points": 100,
       "date": "2026-06-19T14:13:38.447Z"
+    },
+    {
+      "prNumber": "46",
+      "prTitle": "Feature/components guides angular",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/46",
+      "author": "angellogar",
+      "labels": [
+        "documentation",
+        "points:guide-pattern",
+        "bonus:utility",
+        "bonus:community-used",
+        "bonus:streak-3weeks"
+      ],
+      "points": 85,
+      "date": "2026-07-09T07:24:34.291Z"
     }
   ]
 }
