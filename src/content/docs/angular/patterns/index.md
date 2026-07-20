@@ -1,11 +1,19 @@
 ---
-title: Patterns & SOLID Principles
-description: Master design patterns and SOLID principles for building scalable, maintainable Angular applications.
+title: Patterns & Architecture
+description: Master design patterns, SOLID principles, and architecture patterns for building scalable, maintainable Angular applications.
 ---
 
-This section contains essential patterns and best practices that every Angular developer should know. Learn how to structure your code for maintainability, scalability, and testability.
+This section contains essential patterns and best practices that every Angular developer should know. Learn how to structure your code and applications for maintainability, scalability, and testability—from individual components to entire application architectures.
 
 ## Pattern Guides
+
+### Architecture Patterns
+**[Architecture Patterns](./architecture-patterns.md)** — Scalable application structures and when to use them:
+- Module-Based Architecture — Organize by domain with NgModules
+- Feature-Based Architecture — Standalone components and modern routing
+- Monolithic Architecture — Simple, all-in-one applications
+- Micro Frontend Architecture — Independent feature teams
+- Decision matrix and migration paths
 
 ### Design Patterns
 **[Design Patterns](./design-patterns.md)** — Seven essential patterns for Angular development:
@@ -29,8 +37,10 @@ This section contains essential patterns and best practices that every Angular d
 
 ## How to Use These Guides
 
-**Start Here:** Read both guides to understand core patterns and principles  
-**Apply Gradually:** Don't try to implement everything at once  
-**Combine Them:** Design patterns and SOLID principles work together  
-**Refer Back:** Use as reference when designing new features  
-**Team Discussion:** Share with your team to establish consistent practices
+**Start With Architecture:** Begin with Architecture Patterns to understand the overall structure of your application  
+**Add Design Patterns:** Learn Design Patterns for solving common structural problems within your code  
+**Establish Guidelines:** Use SOLID Principles to maintain code quality and long-term maintainability  
+**Apply Gradually:** Don't try to implement everything at once; introduce patterns as you refactor  
+**Combine Them:** Architecture, design patterns, and SOLID principles work together to create well-designed systems  
+**Refer Back:** Use these guides as references when designing new features and making architectural decisions  
+**Team Discussion:** Share with your team to establish consistent practices across your codebase
