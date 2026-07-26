@@ -1,4 +1,6 @@
-# Good Practices and Patterns in Frontend Testing
+> **IMPORTANT**: Even if the examples in this guide are based in React, this guide is applicable to every framework or technology based in Javascript and Typescript. This guide has been created to be agnostic in framework. 
+
+ # Good Practices and Patterns in Frontend Testing
 
 ## Building a test suite that gives confidence without slowing the team down
 
