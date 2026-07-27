@@ -1,6 +1,13 @@
+---
+title: "Frontend testing: good practices and patterns"
+description: "Guide of good practices and patterns for frontend testing, both unit and e2e. Framework agnostic"
+sidebar.order: 4
+---
+
+
 > **IMPORTANT**: Even if the examples in this guide are based in React, this guide is applicable to every framework or technology based in Javascript and Typescript. This guide has been created to be agnostic in framework. 
 
- # Good Practices and Patterns in Frontend Testing
+# Good Practices and Patterns in Frontend Testing
 
 ## Building a test suite that gives confidence without slowing the team down
 
@@ -636,3 +643,10 @@ The quality of a suite becomes obvious the moment the code changes: whether you 
 A project can have thousands of tests and still be risky to change. Another can have a much smaller suite that protects its critical behavior extremely well. Test from the user's perspective whenever possible, keep business logic easy to isolate, mock external boundaries instead of your own application, and treat flaky tests as real defects.
 
 Tests are production code too, and they need clear names, controlled dependencies and continuous maintenance just like everything else.
+
+## References
+
+- [Jest docs](https://jestjs.io/docs/getting-started)
+- [Vitest docs](https://vitest.dev/guide/)
+- [Gitlab bible on frontend test](https://docs.gitlab.com/development/testing_guide/frontend_testing/)
+- [Axe-core, a lib to test accesibility along other frameworks](https://github.com/dequelabs/axe-core)
