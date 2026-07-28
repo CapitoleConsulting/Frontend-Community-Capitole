@@ -219,7 +219,6 @@ ngOnInit(): void {
 ### Handling Resolver Errors
 
 ```typescript
-// user.resolver.ts with error handling
 @Injectable({
   providedIn: 'root'
 })

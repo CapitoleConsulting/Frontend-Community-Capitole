@@ -1,12 +1,12 @@
 ---
 title: Advanced Angular Features
-description: Explore cutting-edge Angular features for 2025. Master signals, zoneless Angular, hydration, and other modern capabilities.
+description: Explore cutting-edge Angular features for 2026. Master signals, zoneless Angular, hydration, and other modern capabilities.
 sidebar.order: 4
 ---
 
 ## Overview
 
-Angular continues to evolve with powerful new features that enhance performance, developer experience, and application capabilities. This guide explores the most impactful advanced features available in Angular 2025 and beyond.
+Angular continues to evolve with powerful new features that enhance performance, developer experience, and application capabilities. This guide explores the most impactful advanced features available in Angular 2026 and beyond.
 
 These features represent the future direction of Angular, enabling developers to build faster, more maintainable, and more scalable applications.
 
@@ -64,10 +64,10 @@ const fullName = computed(() => {
   return `${firstName()} ${lastName()}`;
 });
 
-console.log(fullName()); // "John Doe"
+console.log(fullName());
 
 firstName.set('Jane');
-console.log(fullName()); // "Jane Doe" - automatically updated
+console.log(fullName());
 ```
 
 ### Effects
@@ -84,7 +84,7 @@ effect(() => {
   localStorage.setItem('count', count().toString());
 });
 
-count.set(5); // Logs and saves to localStorage
+count.set(5);
 ```
 
 ### Signals in Components
@@ -209,7 +209,7 @@ export class AdvancedComponent {
 
   loadData(): void {
     this.data = 'Loaded';
-    this.cdr.markForCheck(); // Manually trigger detection
+    this.cdr.markForCheck();
   }
 }
 ```
@@ -320,7 +320,6 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from './auth.service';
 
-// Auth guard as a function
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -333,7 +332,6 @@ export const authGuard: CanActivateFn = (route, state) => {
   return false;
 };
 
-// Usage in routes
 export const routes: Routes = [
   {
     path: 'dashboard',
@@ -356,7 +354,6 @@ export const userResolver: ResolveFn<User> = (route) => {
   return userService.getUserById(userId!);
 };
 
-// Usage
 export const routes: Routes = [
   {
     path: 'user/:id',
@@ -383,7 +380,6 @@ import { AppComponent } from './app.component';
 bootstrapApplication(AppComponent, {
   providers: [
     withHttpClient(),
-    // Other providers
   ]
 });
 ```
@@ -431,7 +427,6 @@ export class UserProfileComponent {
   userId = input<number>(0);
 }
 
-// Usage
 <app-user-profile 
   [userName]="currentUser"
   [userId]="123"
@@ -455,7 +450,6 @@ export class DeleteButtonComponent {
   }
 }
 
-// Usage
 <app-delete-button 
   (deleted)="onItemDeleted($event)"
 ></app-delete-button>
@@ -499,7 +493,6 @@ export class OptimizedComponent {
   constructor(private cdr: ChangeDetectorRef) {}
 
   updateData(): void {
-    // Only update when needed
     this.cdr.markForCheck();
   }
 }
@@ -549,6 +542,8 @@ export class StandaloneComponent {
   myService = inject(MyService);
 }
 ```
+
+> **Note:** Standalone components are **optional in Angular 18** but become the **default in Angular 19+**. You can still use NgModules if preferred, but standalone is the recommended approach for new projects.
 
 ---
 
@@ -651,20 +646,10 @@ import { enableDebugTools } from '@angular/platform-browser';
 enableDebugTools(componentRef);
 ```
 
-### Component Inspector
-
-```typescript
-// Built-in component inspection
-// View component hierarchy
-// Inspect inputs/outputs
-// Check change detection strategy
-```
-
----
 
 ## Comparison: Old vs. Modern Angular
 
-| Feature | Old Angular | Modern Angular 2025 |
+| Feature | Old Angular | Modern Angular 2026 |
 |---------|------------|---|
 | **State** | Observables | Signals |
 | **Structural Directives** | `*ngIf`, `*ngFor` | `@if`, `@for` |
@@ -684,21 +669,17 @@ enableDebugTools(componentRef);
 ### Step 1: Adopt Signals for New State
 
 ```typescript
-// Old
 private data = new BehaviorSubject([]);
 data$ = this.data.asObservable();
 
-// New
 data = signal([]);
 ```
 
 ### Step 2: Use Control Flow Syntax
 
 ```typescript
-// Old
 <div *ngIf="isVisible"> Content </div>
 
-// New
 @if (isVisible) {
   Content
 }
@@ -707,12 +688,10 @@ data = signal([]);
 ### Step 3: Convert to Standalone Components
 
 ```typescript
-// Old
 @NgModule({
   declarations: [MyComponent]
 })
 
-// New
 @Component({
   standalone: true
 })
@@ -721,18 +700,15 @@ data = signal([]);
 ### Step 4: Adopt Functional Guards
 
 ```typescript
-// Old
 @Injectable()
 export class MyGuard implements CanActivate { }
 
-// New
 export const myGuard: CanActivateFn = (route, state) => { }
 ```
 
 ### Step 5: Enable Zoneless (Optional)
 
 ```typescript
-// main.ts
 bootstrapApplication(AppComponent, {
   providers: [
     provideExperimentalZonelessChangeDetection()
@@ -742,7 +718,7 @@ bootstrapApplication(AppComponent, {
 
 ---
 
-## Best Practices for 2025
+## Best Practices for 2026
 
 ### ✅ DO's
 
@@ -763,16 +739,14 @@ export const myGuard: CanActivateFn = (route, state) => true;
 
 **Do keep components focused**
 ```typescript
-// One responsibility per component
 ```
 
 ### ❌ DON'Ts
 
 **Don't mix Observables and Signals**
 ```typescript
-// Avoid: Convert properly
-data$ | async // For async operations
-data = signal() // For local state
+data$ | async
+data = signal()
 ```
 
 **Don't use deprecated structural directives in new code**
@@ -781,17 +755,11 @@ data = signal() // For local state
 // Use: @if, @for
 ```
 
-**Don't use class-based guards**
-```typescript
-// Avoid: Classes
-// Use: Functions
-```
-
 ---
 
 ## Conclusion
 
-Angular 2025 brings powerful new features that make building fast, scalable applications easier than ever:
+Angular 2026 brings powerful new features that make building fast, scalable applications easier than ever:
 
 **Key Takeaways:**
 - ✅ **Signals** — Better local state management
@@ -808,7 +776,7 @@ Adopting these features progressively will modernize your codebase while maintai
 ## References
 
 This guide is based on and inspired by:
-- **[Exploring Advanced Angular Features in 2025](https://payodatechnologyinc.medium.com/exploring-advanced-angular-features-in-2025-6d316ca7a86e)**
+- [Exploring Advanced Angular Features in 2026](https://payodatechnologyinc.medium.com/exploring-advanced-angular-features-in-2025-6d316ca7a86e)
 - [Angular Official Documentation: Signals](https://angular.io/guide/signals)
 - [Angular Official Documentation: Control Flow](https://angular.io/guide/control-flow)
 - [Angular Official Documentation: Standalone Components](https://angular.io/guide/standalone-components)

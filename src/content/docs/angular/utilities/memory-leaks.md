@@ -86,9 +86,7 @@ export class UserComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  displayUser(user: User): void {
-    // Display logic
-  }
+  displayUser(user: User): void {}
 }
 ```
 
@@ -100,7 +98,6 @@ export class UserComponent {
   constructor(private userService: UserService) {}
 }
 
-// Template
 <div *ngIf="user$ | async as user">
   <h1>{{ user.name }}</h1>
 </div>
@@ -215,9 +212,7 @@ export class ScrollComponent implements OnInit, OnDestroy {
     window.removeEventListener('scroll', this.scrollListener);
   }
 
-  handleScroll(): void {
-    // Scroll logic
-  }
+  handleScroll(): void {}
 }
 ```
 
@@ -245,9 +240,7 @@ export class ScrollComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  handleScroll(): void {
-    // Scroll logic
-  }
+  handleScroll(): void {}
 }
 ```
 
@@ -277,11 +270,11 @@ export class ModalComponent implements OnDestroy {
 
   closeModal(): void {
     this.modalElement?.classList.remove('open');
-    this.modalElement = null; // Clear reference
+    this.modalElement = null;
   }
 
   ngOnDestroy(): void {
-    this.modalElement = null; // Ensure cleanup
+    this.modalElement = null;
   }
 }
 ```
@@ -326,7 +319,6 @@ export class UserComponent implements OnInit {
 
 **✅ Good: Use proper state management with cleanup**
 ```typescript
-// Use Angular services with proper scope
 @Injectable({
   providedIn: 'root'
 })
@@ -426,14 +418,12 @@ ngOnInit(): void {
 ### ✅ Prefer Async Pipe
 
 ```typescript
-// Component
 export class UserComponent {
   user$ = this.userService.getUser();
 
   constructor(private userService: UserService) {}
 }
 
-// Template - async pipe handles subscription and cleanup
 <div *ngIf="user$ | async as user">
   {{ user.name }}
 </div>
@@ -456,21 +446,12 @@ export class UserComponent {
     );
 
   constructor(private userService: UserService) {}
-  // No OnDestroy needed!
 }
 ```
 
 ### ✅ Document Lifecycle Hooks
 
 ```typescript
-/**
- * Component lifecycle:
- * 1. ngOnInit - Load data, set up subscriptions
- * 2. ngOnChanges - React to input property changes
- * 3. ngDoCheck - Custom change detection
- * 4. ngAfterViewInit - Access child components
- * 5. ngOnDestroy - Cleanup subscriptions, timers, listeners
- */
 export class MyComponent implements OnInit, OnDestroy {
   ngOnInit(): void { }
   ngOnDestroy(): void { }
@@ -504,7 +485,6 @@ Chrome DevTools → Memory → Take heap snapshot
 ### Angular DevTools
 
 ```typescript
-// Enable debug mode to track component lifecycle
 import { enableDebugTools } from '@angular/platform-browser';
 
 enableDebugTools(componentRef);
@@ -560,9 +540,7 @@ ngOnDestroy(): void {
 **❌ Bad:**
 ```typescript
 ngOnInit(): void {
-  this.form.valueChanges.subscribe(value => {
-    // Memory leak
-  });
+  this.form.valueChanges.subscribe(value => {});
 }
 ```
 
@@ -573,9 +551,7 @@ private destroy$ = new Subject<void>();
 ngOnInit(): void {
   this.form.valueChanges
     .pipe(takeUntil(this.destroy$))
-    .subscribe(value => {
-      // Cleanup handled
-    });
+    .subscribe(value => {});
 }
 
 ngOnDestroy(): void {
@@ -589,9 +565,7 @@ ngOnDestroy(): void {
 **❌ Bad:**
 ```typescript
 ngOnInit(): void {
-  this.router.events.subscribe(event => {
-    // Memory leak
-  });
+  this.router.events.subscribe(event => {});
 }
 ```
 
@@ -602,9 +576,7 @@ private destroy$ = new Subject<void>();
 ngOnInit(): void {
   this.router.events
     .pipe(takeUntil(this.destroy$))
-    .subscribe(event => {
-      // Cleanup handled
-    });
+    .subscribe(event => {});
 }
 
 ngOnDestroy(): void {
@@ -620,7 +592,6 @@ ngOnDestroy(): void {
 ### Monitor Memory Usage
 
 ```typescript
-// Log memory usage periodically
 if (performance.memory) {
   console.log({
     usedJSHeapSize: (performance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
@@ -690,9 +661,7 @@ export class ExampleComponent implements OnInit, OnDestroy {
     this.data = null;
   }
 
-  private onResize = (): void => {
-    // Handle resize
-  };
+  private onResize = (): void => {};
 }
 ```
 
