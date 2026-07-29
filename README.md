@@ -22,7 +22,7 @@ This repository powers the Frontend Community portal, where all documentation, a
 
 | Position | User | Points | Rank |
 |---:|---|---:|---|
-| 1 | Isaac García | 470 | Advanced Contributor |
+| 1 | Isaac García | 740 | Community Builder |
 | 2 | Juan Angel Garcia Jimenez | 410 | Advanced Contributor |
 | 3 | Nadia Ujovich | 160 | Contributor |
 | 4 | Manuel Lopez Camarena | 130 | Contributor |
@@ -43,7 +43,7 @@ This repository powers the Frontend Community portal, where all documentation, a
 | 19 | Ernesto Nicolas Rickert | 5 | Rookie |
 | 20 | Bryan Kevin Cóndor Romero | 5 | Rookie |
 
-_Last updated: 2026-07-29T06:06:56.859Z_
+_Last updated: 2026-07-29T06:19:18.537Z_
 
 <!-- LEADERBOARD:END -->
 

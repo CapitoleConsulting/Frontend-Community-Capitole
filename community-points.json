@@ -2,8 +2,8 @@
   "users": {
     "Isaacgc1999": {
       "name": "Isaac García",
-      "points": 470,
-      "rank": "Advanced Contributor"
+      "points": 740,
+      "rank": "Community Builder"
     },
     "nujovich": {
       "name": "Nadia Ujovich",
@@ -332,6 +332,23 @@
       ],
       "points": 105,
       "date": "2026-07-29T06:06:56.858Z"
+    },
+    {
+      "prNumber": "61",
+      "prTitle": "fix: add newline at end of file in award-points script",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/61",
+      "author": "Isaacgc1999",
+      "labels": [
+        "documentation",
+        "points:guide-pattern",
+        "points:technical-example",
+        "points:tooling",
+        "bonus:community-used",
+        "points:doc-architecture",
+        "points:doc-reference"
+      ],
+      "points": 270,
+      "date": "2026-07-29T06:19:18.537Z"
     }
   ]
 }
