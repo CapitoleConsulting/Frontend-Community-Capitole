@@ -17,7 +17,7 @@
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 130,
+      "points": 235,
       "rank": "Contributor"
     },
     "luismiguel-garcia": {
@@ -349,6 +349,21 @@
       ],
       "points": 270,
       "date": "2026-07-29T06:19:18.537Z"
+    },
+    {
+      "prNumber": "64",
+      "prTitle": "fix: suggested",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/64",
+      "author": "hndcore",
+      "labels": [
+        "points:small-improvement",
+        "points:guide-pattern",
+        "points:tooling",
+        "bonus:utility",
+        "points:doc-architecture"
+      ],
+      "points": 105,
+      "date": "2026-07-29T07:18:43.836Z"
     }
   ]
 }
