@@ -11,7 +11,7 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 410,
+      "points": 525,
       "rank": "Advanced Contributor",
       "name": "Juan Angel Garcia Jimenez"
     },
@@ -364,6 +364,19 @@
       ],
       "points": 105,
       "date": "2026-07-29T07:18:43.836Z"
+    },
+    {
+      "prNumber": "67",
+      "prTitle": "docs(state-management): add comprehensive Angular state management gu…",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/67",
+      "author": "angellogar",
+      "labels": [
+        "points:guide-pattern",
+        "bonus:community-used",
+        "points:doc-architecture"
+      ],
+      "points": 115,
+      "date": "2026-07-29T12:36:21.196Z"
     }
   ]
 }
