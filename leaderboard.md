@@ -5,7 +5,7 @@
 | 1 | Juan Angel Garcia Jimenez | 410 | Advanced Contributor |
 | 2 | Isaac García | 365 | Advanced Contributor |
 | 3 | Nadia Ujovich | 160 | Contributor |
-| 4 | Manuel Lopez Camarena | 35 | Rookie |
+| 4 | Manuel Lopez Camarena | 130 | Contributor |
 | 5 | Luis Miguel García Palomares | 20 | Rookie |
 | 6 | Alexis Valdez | 20 | Rookie |
 | 7 | Jacobo | 15 | Rookie |
@@ -23,4 +23,4 @@
 | 19 | Ernesto Nicolas Rickert | 5 | Rookie |
 | 20 | Bryan Kevin Cóndor Romero | 5 | Rookie |
 
-_Last updated: 2026-07-29T05:32:54.856Z_
+_Last updated: 2026-07-29T05:35:06.567Z_
