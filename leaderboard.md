@@ -2,8 +2,8 @@
 
 | Position | User | Points | Rank |
 |---:|---|---:|---|
-| 1 | Isaac García | 365 | Advanced Contributor |
-| 2 | Juan Angel Garcia Jimenez | 365 | Advanced Contributor |
+| 1 | Juan Angel Garcia Jimenez | 410 | Advanced Contributor |
+| 2 | Isaac García | 365 | Advanced Contributor |
 | 3 | Nadia Ujovich | 160 | Contributor |
 | 4 | Manuel Lopez Camarena | 130 | Contributor |
 | 5 | Luis Miguel García Palomares | 20 | Rookie |
