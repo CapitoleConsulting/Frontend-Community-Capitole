@@ -2,7 +2,7 @@
   "users": {
     "Isaacgc1999": {
       "name": "Isaac García",
-      "points": 365,
+      "points": 470,
       "rank": "Advanced Contributor"
     },
     "nujovich": {
@@ -316,6 +316,22 @@
       ],
       "points": 45,
       "date": "2026-07-29T05:32:54.855Z"
+    },
+    {
+      "prNumber": "58",
+      "prTitle": "chore(points): add PR details for documentation update",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/58",
+      "author": "Isaacgc1999",
+      "labels": [
+        "documentation",
+        "points:tooling",
+        "bonus:utility",
+        "bonus:community-used",
+        "points:doc-architecture",
+        "points:poc-idea"
+      ],
+      "points": 105,
+      "date": "2026-07-29T06:06:56.858Z"
     }
   ]
 }
