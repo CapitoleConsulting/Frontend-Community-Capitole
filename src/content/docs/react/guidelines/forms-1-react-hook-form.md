@@ -4,6 +4,7 @@ description: "Complete guide on how RHF works and how to setup it, using Zod for
 sidebar.order: 1
 ---
 
+
 # Building Better Forms with React Hook Form
 
 ## Reducing boilerplate without losing control of validation and user feedback
