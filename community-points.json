@@ -17,8 +17,8 @@
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 35,
-      "rank": "Rookie"
+      "points": 130,
+      "rank": "Contributor"
     },
     "luismiguel-garcia": {
       "name": "Luis Miguel García Palomares",
@@ -284,6 +284,23 @@
       ],
       "points": 55,
       "date": "2026-07-20T09:01:01.731Z"
+    },
+    {
+      "prNumber": "53",
+      "prTitle": "Feat: Frontend testing guide",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/53",
+      "author": "hndcore",
+      "labels": [
+        "documentation",
+        "points:guide-pattern",
+        "points:technical-example",
+        "points:tooling",
+        "bonus:utility",
+        "bonus:multi-framework",
+        "bonus:community-used"
+      ],
+      "points": 95,
+      "date": "2026-07-29T05:35:06.566Z"
     }
   ]
 }
