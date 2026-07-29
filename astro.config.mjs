@@ -46,6 +46,7 @@ export default defineConfig({
             { label: "Architecture", autogenerate: { directory: "angular/architecture" } },
             { label: "Components", autogenerate: { directory: "angular/components" } },
             { label: "Patterns", autogenerate: { directory: "angular/patterns" } },
+            { label: "Utilities", autogenerate: { directory: "angular/utilities" } },
             { label: "State management", autogenerate: { directory: "angular/state-management" } },
             { label: "Examples", autogenerate: { directory: "angular/examples" } },
           ],
