@@ -103,6 +103,10 @@
       "githubUsername": "simonpedro33",
       "points": 15,
       "rank": "Rookie"
+    },
+    "github-actions[bot]": {
+      "points": 115,
+      "rank": "Contributor"
     }
   },
   "history": [
@@ -332,6 +336,21 @@
       ],
       "points": 105,
       "date": "2026-07-29T06:06:56.858Z"
+    },
+    {
+      "prNumber": "59",
+      "prTitle": "chore(points): award points for PR #58",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/59",
+      "author": "github-actions[bot]",
+      "labels": [
+        "documentation",
+        "points:guide-pattern",
+        "bonus:utility",
+        "bonus:community-used",
+        "points:doc-architecture"
+      ],
+      "points": 115,
+      "date": "2026-07-29T06:11:20.817Z"
     }
   ]
 }
