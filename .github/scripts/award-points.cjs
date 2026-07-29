@@ -230,4 +230,4 @@ fs.writeFileSync(LEADERBOARD_FILE, fullLeaderboard);
 replaceBlock(README_FILE, leaderboardMarkdown);
 replaceBlock(HOME_FILE, leaderboardMarkdown);
 
-})();
+})(); 
