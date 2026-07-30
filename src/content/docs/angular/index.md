@@ -12,4 +12,5 @@ Section dedicated to Angular. Available subsections:
 - Patterns & Architecture
 - Utilities & Advanced Features
 - State management
+- Advanced Angular (Injection Tokens, Angular Elements)
 - Examples
