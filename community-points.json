@@ -11,7 +11,7 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 525,
+      "points": 670,
       "rank": "Advanced Contributor",
       "name": "Juan Angel Garcia Jimenez"
     },
@@ -377,6 +377,20 @@
       ],
       "points": 115,
       "date": "2026-07-29T12:36:21.196Z"
+    },
+    {
+      "prNumber": "70",
+      "prTitle": "Add  Advanced Features section to Angular documentation",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/70",
+      "author": "angellogar",
+      "labels": [
+        "points:guide-pattern",
+        "bonus:utility",
+        "bonus:community-used",
+        "bonus:streak-2months"
+      ],
+      "points": 145,
+      "date": "2026-08-24T09:30:18.143Z"
     }
   ]
 }
