@@ -1,6 +1,8 @@
 ---
 title: Components
-description: Coming soon — add examples and notes to this section.
+description: React component fundamentals, rendering behavior, state and effects.
 ---
 
-This section has no content yet. Add a `.md` or `.mdx` file here to get started.
+## Available Articles
+
+- [React: Rendering, State and Effects](rendering-state-and-effects/): What causes a render, how state and component identity work, and when to use effects.
