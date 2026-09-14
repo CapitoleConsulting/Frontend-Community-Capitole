@@ -17,8 +17,8 @@
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 235,
-      "rank": "Contributor"
+      "points": 645,
+      "rank": "Advanced Contributor"
     },
     "luismiguel-garcia": {
       "name": "Luis Miguel García Palomares",
@@ -391,6 +391,33 @@
       ],
       "points": 145,
       "date": "2026-08-24T09:30:18.143Z"
+    },
+    {
+      "prNumber": "73",
+      "prTitle": "feat: react understanding render",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/73",
+      "author": "hndcore",
+      "labels": [
+        "documentation",
+        "points:guide-pattern",
+        "points:doc-architecture",
+        "bonus:streak-2months"
+      ],
+      "points": 195,
+      "date": "2026-09-09T07:11:49.707Z"
+    },
+    {
+      "prNumber": "76",
+      "prTitle": "feat: react directory and architecture organization ",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/76",
+      "author": "hndcore",
+      "labels": [
+        "points:guide-pattern",
+        "points:doc-architecture",
+        "points:doc-reference"
+      ],
+      "points": 215,
+      "date": "2026-09-14T09:20:17.828Z"
     }
   ]
 }
