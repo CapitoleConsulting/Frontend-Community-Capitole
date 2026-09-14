@@ -1,6 +1,8 @@
 ---
 title: Architecture
-description: Coming soon — add examples and notes to this section.
+description: Practical approaches to organizing React applications and defining feature boundaries.
 ---
 
-This section has no content yet. Add a `.md` or `.mdx` file here to get started.
+## Available Articles
+
+- [React Architecture: Organizing by Feature](organizing-by-feature/): Components, data access, business rules and state ownership as an application grows.
