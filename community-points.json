@@ -17,7 +17,7 @@
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 430,
+      "points": 645,
       "rank": "Advanced Contributor"
     },
     "luismiguel-garcia": {
@@ -405,6 +405,19 @@
       ],
       "points": 195,
       "date": "2026-09-09T07:11:49.707Z"
+    },
+    {
+      "prNumber": "76",
+      "prTitle": "feat: react directory and architecture organization ",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/76",
+      "author": "hndcore",
+      "labels": [
+        "points:guide-pattern",
+        "points:doc-architecture",
+        "points:doc-reference"
+      ],
+      "points": 215,
+      "date": "2026-09-14T09:20:17.828Z"
     }
   ]
 }
