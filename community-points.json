@@ -11,8 +11,8 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 670,
-      "rank": "Advanced Contributor",
+      "points": 795,
+      "rank": "Community Builder",
       "name": "Juan Angel Garcia Jimenez"
     },
     "hndcore": {
@@ -418,6 +418,18 @@
       ],
       "points": 215,
       "date": "2026-09-14T09:20:17.828Z"
+    },
+    {
+      "prNumber": "79",
+      "prTitle": "docs(advanced): add some examples for advanced utilities for angular",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/79",
+      "author": "angellogar",
+      "labels": [
+        "points:guide-pattern",
+        "bonus:streak-2months"
+      ],
+      "points": 125,
+      "date": "2026-09-15T09:05:50.705Z"
     }
   ]
 }
