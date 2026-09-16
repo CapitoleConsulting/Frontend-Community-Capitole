@@ -16,6 +16,34 @@ Advanced Angular covers sophisticated patterns and features for building enterpr
 - Token inheritance and composition
 - Testing with tokens
 
+### Advanced Injection Token Patterns
+**[Advanced Injection Token Patterns](./injection-tokens-patterns.md)** — Production-ready patterns with tokens:
+- Building extensible plugin systems
+- Hierarchical dependency injection
+- Third-party library integration
+- Multi-provider strategies
+- Complex configuration scenarios
+- Real-world implementation examples
+
+### Signal Forms
+**[Signal Forms in Angular 21-22](./signal-forms.md)** — Type-safe reactive forms with signals:
+- Signal-based form state management
+- Full type safety without compromises
+- Custom validators and async validation
+- Reusable validation schemas
+- Creating custom controls without ControlValueAccessor
+- Gradual migration from Reactive Forms
+- Nested and array field handling
+
+### Lazy Loading Services
+**[Lazy Loading Services](./lazy-loading-services.md)** — On-demand service loading in Angular 22:
+- Splitting heavy services from main bundle
+- Using injectAsync for on-demand loading
+- Prefetch strategies (idle, hover, custom triggers)
+- Bundle verification and optimization
+- Practical examples (PDF export, editors, analytics)
+- Performance considerations and best practices
+
 ### Angular Elements
 **[Angular Elements](./angular-elements.md)** — Build web components with Angular:
 - What are Angular elements and web components
