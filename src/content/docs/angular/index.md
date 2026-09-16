@@ -10,7 +10,10 @@ Section dedicated to Angular. Available subsections:
 - Architecture
 - Components
 - Patterns & Architecture
+- RxJS (operators, patterns, signals interop)
+- SSR & Rendering (hydration, SEO, common issues)
 - Utilities & Advanced Features
 - State management
 - Advanced Angular (Injection Tokens, Angular Elements)
+- Troubleshooting (error codes, diagnosis and fixes)
 - Examples
