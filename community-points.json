@@ -17,7 +17,7 @@
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 645,
+      "points": 670,
       "rank": "Advanced Contributor"
     },
     "luismiguel-garcia": {
@@ -430,6 +430,17 @@
       ],
       "points": 125,
       "date": "2026-09-15T09:05:50.705Z"
+    },
+    {
+      "prNumber": "83",
+      "prTitle": "feat: react query on server state management",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/83",
+      "author": "hndcore",
+      "labels": [
+        "points:guide-pattern"
+      ],
+      "points": 25,
+      "date": "2026-09-16T07:55:41.381Z"
     }
   ]
 }
