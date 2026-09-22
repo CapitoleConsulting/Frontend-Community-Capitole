@@ -11,7 +11,7 @@
       "rank": "Contributor"
     },
     "angellogar": {
-      "points": 795,
+      "points": 900,
       "rank": "Community Builder",
       "name": "Juan Angel Garcia Jimenez"
     },
@@ -459,6 +459,19 @@
       ],
       "points": 105,
       "date": "2026-09-22T12:29:54.819Z"
+    },
+    {
+      "prNumber": "86",
+      "prTitle": "Feature/ssr hydration extra info",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/86",
+      "author": "angellogar",
+      "labels": [
+        "bonus:community-used",
+        "points:article-medium",
+        "bonus:article-comparison"
+      ],
+      "points": 105,
+      "date": "2026-09-22T12:34:50.974Z"
     }
   ]
 }
