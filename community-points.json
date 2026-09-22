@@ -106,7 +106,7 @@
     },
     "enrique-fer": {
       "name": "Enrique Fernandez",
-      "points": 105,
+      "points": 165,
       "rank": "Contributor"
     }
   },
@@ -473,6 +473,18 @@
       ],
       "points": 105,
       "date": "2026-09-22T12:34:50.974Z"
+    },
+    {
+      "prNumber": "87",
+      "prTitle": "React base guidelines",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/87",
+      "author": "enrique-fer",
+      "labels": [
+        "bonus:community-used",
+        "points:article-short"
+      ],
+      "points": 60,
+      "date": "2026-09-22T12:47:33.654Z"
     }
   ]
 }
