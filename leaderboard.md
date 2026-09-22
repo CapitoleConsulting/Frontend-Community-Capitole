@@ -6,7 +6,7 @@
 | 2 | Isaac García | 740 | Community Builder |
 | 3 | Manuel Lopez Camarena | 670 | Advanced Contributor |
 | 4 | Nadia Ujovich | 160 | Contributor |
-| 5 | enrique-fer | 105 | Contributor |
+| 5 | Enrique Fernandez | 105 | Contributor |
 | 6 | Luis Miguel García Palomares | 20 | Rookie |
 | 7 | Alexis Valdez | 20 | Rookie |
 | 8 | Jacobo | 15 | Rookie |
