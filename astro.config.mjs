@@ -57,6 +57,7 @@ export default defineConfig({
           items: [
             { label: "Introduction", link: "/react/" },
             { label: "Guidelines", autogenerate: { directory: "react/guidelines" } },
+            { label: "Hooks", autogenerate: { directory: "react/hooks" } },
             { label: "Architecture", autogenerate: { directory: "react/architecture" } },
             { label: "Components", autogenerate: { directory: "react/components" } },
             { label: "Patterns", autogenerate: { directory: "react/patterns" } },
