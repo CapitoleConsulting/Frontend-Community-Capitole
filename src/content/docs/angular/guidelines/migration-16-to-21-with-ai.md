@@ -1,6 +1,8 @@
-# Angular 16 → 21 Migration with AI
-
-Sep 23, 2026 · @André Putz
+---
+title: Angular 16 → 21 Migration with AI
+description: Migration did from Angular 16 → 21 for a very high complex application using AI. Best practices, lessons learned and guidelines shared here.
+sidebar.order: 11
+---
 
 ## Context and scope
 
