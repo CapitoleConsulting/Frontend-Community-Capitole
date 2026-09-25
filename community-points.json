@@ -108,6 +108,11 @@
       "name": "Enrique Fernandez",
       "points": 165,
       "rank": "Contributor"
+    },
+    "AndPutz": {
+      "name": "Andre Putz",
+      "points": 45,
+      "rank": "Rookie"
     }
   },
   "history": [
@@ -485,6 +490,19 @@
       ],
       "points": 60,
       "date": "2026-09-22T12:47:33.654Z"
+    },
+    {
+      "prNumber": "95",
+      "prTitle": "Feature/angular add migration note",
+      "prUrl": "https://github.com/CapitoleConsulting/Frontend-Community-Capitole/pull/95",
+      "author": "AndPutz",
+      "labels": [
+        "points:guide-pattern",
+        "bonus:utility",
+        "bonus:community-used"
+      ],
+      "points": 45,
+      "date": "2026-09-25T05:44:50.138Z"
     }
   ]
 }
