@@ -1,117 +1,122 @@
 {
+  "period": {
+    "startDate": "2026-09-29",
+    "nextResetDate": "2026-12-29",
+    "resetDay": 29
+  },
   "users": {
     "Isaacgc1999": {
       "name": "Isaac García",
-      "points": 740,
-      "rank": "Community Builder"
+      "points": 0,
+      "rank": "Rookie"
     },
     "nujovich": {
       "name": "Nadia Ujovich",
-      "points": 160,
-      "rank": "Contributor"
+      "points": 0,
+      "rank": "Rookie"
     },
     "angellogar": {
-      "points": 900,
-      "rank": "Community Builder",
+      "points": 0,
+      "rank": "Rookie",
       "name": "Juan Angel Garcia Jimenez"
     },
     "hndcore": {
       "name": "Manuel Lopez Camarena",
-      "points": 670,
-      "rank": "Advanced Contributor"
+      "points": 0,
+      "rank": "Rookie"
     },
     "luismiguel-garcia": {
       "name": "Luis Miguel García Palomares",
-      "points": 20,
+      "points": 0,
       "rank": "Rookie"
     },
     "alexis-valdez": {
       "name": "Alexis Valdez",
-      "points": 20,
+      "points": 0,
       "rank": "Rookie"
     },
     "josevicente-lucas": {
       "name": "Jose Vicente Lucas Poveda",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "hugo-barcelo": {
       "name": "Hugo Barceló Díez",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "francisco-padron": {
       "name": "Francisco Javier Padrón",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "victor-navarro": {
       "name": "Victor Navarro",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "jacobo-gonzalez": {
       "name": "Jacobo",
       "githubUsername": "jacobogonzalez",
-      "points": 15,
+      "points": 0,
       "rank": "Rookie"
     },
     "juanfrancisco-martin": {
       "name": "Juan Francisco Martin Marcos",
-      "points": 15,
+      "points": 0,
       "rank": "Rookie"
     },
     "roger-porta": {
       "name": "Roger Porta",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "david-portilla": {
       "name": "David Portilla",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "hugo-moragues": {
       "name": "Hugo Moragues Valencia",
       "githubUsername": "hmorv",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "marco-aguilera": {
       "name": "Marco Aguilera",
-      "points": 5,
+      "points": 0,
       "rank": "Rookie"
     },
     "ernesto-rickert": {
       "name": "Ernesto Nicolas Rickert",
-      "points": 5,
+      "points": 0,
       "rank": "Rookie"
     },
     "bryan-condor": {
       "name": "Bryan Kevin Cóndor Romero",
       "githubUsername": "vaayroon",
-      "points": 5,
+      "points": 0,
       "rank": "Rookie"
     },
     "victor-alvarez": {
       "name": "Victor Alvarez",
-      "points": 10,
+      "points": 0,
       "rank": "Rookie"
     },
     "simon-hernandez": {
       "name": "Simón P. Hernández Leal",
       "githubUsername": "simonpedro33",
-      "points": 15,
+      "points": 0,
       "rank": "Rookie"
     },
     "enrique-fer": {
       "name": "Enrique Fernandez",
-      "points": 165,
-      "rank": "Contributor"
+      "points": 0,
+      "rank": "Rookie"
     },
     "AndPutz": {
       "name": "Andre Putz",
-      "points": 45,
+      "points": 0,
       "rank": "Rookie"
     }
   },

@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  schedule:
+    - cron: "0 0 * * *"
 
 permissions:
   contents: write
@@ -11,7 +13,7 @@ permissions:
 
 jobs:
   award-points:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'schedule' || (github.event.pull_request.merged == true && github.event.pull_request.user.login != 'copilot-bot')
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +27,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Award points
+      - name: Award points or check quarterly reset
+        id: award
         run: node .github/scripts/award-points.cjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,8 +38,18 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
 
+      - name: Commit quarterly reset
+        if: github.event_name == 'schedule' && steps.award.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add community-points.json leaderboard.md README.md src/content/docs/index.mdx
+          git commit -m "chore(points): quarterly leaderboard reset"
+          git push
+
       - name: Create pull request with points update
         uses: peter-evans/create-pull-request@v6
+        if: github.event_name == 'pull_request' && steps.award.outputs.updated == 'true'
         with:
           commit-message: "chore(points): award points for PR #${{ github.event.pull_request.number }}"
           branch: "points/award-pr-${{ github.event.pull_request.number }}"

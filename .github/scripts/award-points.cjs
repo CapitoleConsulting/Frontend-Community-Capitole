@@ -93,6 +93,27 @@ function getRank(points) {
   return "Rookie";
 }
 
+function addThreeMonths(date, day) {
+  const [year, month] = date.split("-").map(Number);
+  const targetMonth = month - 1 + 3;
+  const targetYear = year + Math.floor(targetMonth / 12);
+  const normalizedMonth = targetMonth % 12;
+  const lastDay = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  const targetDay = Math.min(day, lastDay);
+
+  return `${targetYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+}
+
+function setWorkflowOutput(name, value) {
+  if (process.env.GITHUB_OUTPUT) {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
+  }
+}
+
+function isCopilotBot(username) {
+  return username?.toLowerCase() === "copilot-bot";
+}
+
 async function fetchGitHubName(username) {
   try {
     const headers = { "User-Agent": "Frontend-Community-Points-Bot" };
@@ -106,8 +127,84 @@ async function fetchGitHubName(username) {
   }
 }
 
+function applyQuarterlyReset(data, today) {
+  if (!data.period?.nextResetDate) return false;
+
+  const resetDay = data.period.resetDay || Number(data.period.nextResetDate.slice(-2));
+  let resetDue = false;
+
+  while (data.period.nextResetDate <= today) {
+    data.period.startDate = data.period.nextResetDate;
+    data.period.nextResetDate = addThreeMonths(data.period.nextResetDate, resetDay);
+    resetDue = true;
+  }
+
+  if (!resetDue) return false;
+
+  for (const userInfo of Object.values(data.users)) {
+    userInfo.points = 0;
+    userInfo.rank = "Rookie";
+  }
+
+  return true;
+}
+
+async function awardPoints(data) {
+  let basePoints = 0;
+
+  for (const label of labels) {
+    if (pointsMap[label]) basePoints += pointsMap[label];
+  }
+
+  if (labels.includes("penalty:low-effort")) {
+    basePoints = Math.floor(basePoints * 0.5);
+  }
+
+  const resolvedKey =
+    Object.keys(data.users).find(
+      (key) => data.users[key].githubUsername === prAuthor
+    ) || prAuthor;
+
+  if (!data.users[resolvedKey]) {
+    data.users[resolvedKey] = { points: 0, rank: "Rookie" };
+  }
+
+  for (const [key, userInfo] of Object.entries(data.users)) {
+    const githubUser = userInfo.githubUsername || key;
+    const name = await fetchGitHubName(githubUser);
+    if (name) userInfo.name = name;
+  }
+
+  if (basePoints <= 0) {
+    console.log("No points labels found. Regenerating leaderboard only.");
+    return false;
+  }
+
+  const alreadyAwarded = data.history.some((entry) => entry.prNumber === prNumber);
+  if (alreadyAwarded) {
+    console.log(`PR #${prNumber} already awarded. Regenerating leaderboard only.`);
+    return false;
+  }
+
+  data.users[resolvedKey].points += basePoints;
+  data.users[resolvedKey].rank = getRank(data.users[resolvedKey].points);
+  data.history.push({
+    prNumber,
+    prTitle,
+    prUrl,
+    author: resolvedKey,
+    labels,
+    points: basePoints,
+    date: new Date().toISOString(),
+  });
+
+  console.log(`Awarded ${basePoints} points to ${resolvedKey}`);
+  return true;
+}
+
 function generateLeaderboardMarkdown(data) {
   const rows = Object.entries(data.users)
+    .filter(([, info]) => info.points > 0)
     .sort((a, b) => b[1].points - a[1].points)
     .map(([user, info], index) => {
       const displayName = info.name || user;
@@ -157,77 +254,45 @@ function replaceBlock(filePath, content) {
 }
 
 (async () => {
+  const data = fs.existsSync(POINTS_FILE)
+    ? JSON.parse(fs.readFileSync(POINTS_FILE, "utf8"))
+    : { users: {}, history: [] };
 
-let basePoints = 0;
+  const isScheduledRun = process.env.GITHUB_EVENT_NAME === "schedule";
 
-for (const label of labels) {
-  if (pointsMap[label]) {
-    basePoints += pointsMap[label];
+  if (!isScheduledRun && isCopilotBot(prAuthor)) {
+    console.log("Skipping points update for copilot-bot.");
+    setWorkflowOutput("updated", "false");
+    return;
   }
-}
 
-if (labels.includes("penalty:low-effort")) {
-  basePoints = Math.floor(basePoints * 0.5);
-}
+  const today = new Date().toISOString().slice(0, 10);
+  const resetDue = applyQuarterlyReset(data, today);
 
-const data = fs.existsSync(POINTS_FILE)
-  ? JSON.parse(fs.readFileSync(POINTS_FILE, "utf8"))
-  : { users: {}, history: [] };
+  if (isScheduledRun && !resetDue) {
+    console.log(`No quarterly reset due. Next reset: ${data.period?.nextResetDate || "not configured"}`);
+    setWorkflowOutput("updated", "false");
+    return;
+  }
 
-const resolvedKey =
-  Object.keys(data.users).find(
-    (key) => data.users[key].githubUsername === prAuthor
-  ) || prAuthor;
+  const shouldWriteData = resetDue || (!isScheduledRun && await awardPoints(data));
 
-if (!data.users[resolvedKey]) {
-  data.users[resolvedKey] = {
-    points: 0,
-    rank: "Rookie",
-  };
-}
-
-for (const [key, userInfo] of Object.entries(data.users)) {
-  const githubUser = userInfo.githubUsername || key;
-  const name = await fetchGitHubName(githubUser);
-  if (name) userInfo.name = name;
-}
-
-if (basePoints <= 0) {
-  console.log("No points labels found. Regenerating leaderboard only.");
-} else {
-  const alreadyAwarded = data.history.some((entry) => entry.prNumber === prNumber);
-
-  if (alreadyAwarded) {
-    console.log(`PR #${prNumber} already awarded. Regenerating leaderboard only.`);
-  } else {
-    data.users[resolvedKey].points += basePoints;
-    data.users[resolvedKey].rank = getRank(data.users[resolvedKey].points);
-
-    data.history.push({
-      prNumber,
-      prTitle,
-      prUrl,
-      author: resolvedKey,
-      labels,
-      points: basePoints,
-      date: new Date().toISOString(),
-    });
-
+  if (shouldWriteData) {
     fs.writeFileSync(POINTS_FILE, JSON.stringify(data, null, 2));
-    console.log(`Awarded ${basePoints} points to ${resolvedKey}`);
   }
-}
 
-const leaderboardMarkdown = generateLeaderboardMarkdown(data);
+  const leaderboardMarkdown = generateLeaderboardMarkdown(data);
 
-const fullLeaderboard = `# Frontend Community Leaderboard
+  const fullLeaderboard = `# Frontend Community Leaderboard
 
 ${leaderboardMarkdown}
 `;
 
-fs.writeFileSync(LEADERBOARD_FILE, fullLeaderboard);
+  fs.writeFileSync(LEADERBOARD_FILE, fullLeaderboard);
 
-replaceBlock(README_FILE, leaderboardMarkdown);
-replaceBlock(HOME_FILE, leaderboardMarkdown);
+  replaceBlock(README_FILE, leaderboardMarkdown);
+  replaceBlock(HOME_FILE, leaderboardMarkdown);
 
-})(); 
+  setWorkflowOutput("updated", isScheduledRun ? String(resetDue) : "true");
+
+})();
