@@ -48,6 +48,7 @@ export default defineConfig({
             { label: "Patterns", autogenerate: { directory: "angular/patterns" } },
             { label: "RxJS", autogenerate: { directory: "angular/rxjs" } },
             { label: "SSR & Rendering", autogenerate: { directory: "angular/ssr" } },
+            { label: "Testing & QA", autogenerate: { directory: "angular/testing" } },
             { label: "Utilities", autogenerate: { directory: "angular/utilities" } },
             { label: "State management", autogenerate: { directory: "angular/state-management" } },
             { label: "Advanced", autogenerate: { directory: "angular/advanced" } },
