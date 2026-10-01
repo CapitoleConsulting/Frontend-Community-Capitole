@@ -12,6 +12,7 @@ Section dedicated to Angular. Available subsections:
 - Patterns & Architecture
 - RxJS (operators, patterns, signals interop)
 - SSR & Rendering (hydration, SEO, common issues)
+- **Testing & Quality Assurance** (unit testing, E2E testing, best practices)
 - Utilities & Advanced Features
 - State management
 - Advanced Angular (Injection Tokens, Angular Elements)
